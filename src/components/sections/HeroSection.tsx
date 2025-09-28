@@ -18,7 +18,7 @@ export const HeroSection = () => {
           {/* Logo with elegant styling */}
           <div className="mb-12 animate-fade-up">
             <div className="relative inline-block">
-              <div className="absolute -inset-10 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-xl opacity-50"></div>
+              <div className="absolute -inset-6 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-xl opacity-50"></div>
               <div className="relative bg-white/10 backdrop-blur-sm rounded-full p-8 shadow-2xl border border-white/20">
                 <img 
                   src="/logo.png" 
