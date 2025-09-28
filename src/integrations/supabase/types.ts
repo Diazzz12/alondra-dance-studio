@@ -14,7 +14,131 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bookings: {
+        Row: {
+          booking_date: string
+          created_at: string
+          end_time: string
+          id: string
+          notes: string | null
+          pole_station_id: string
+          start_time: string
+          status: string
+          total_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          booking_date: string
+          created_at?: string
+          end_time: string
+          id?: string
+          notes?: string | null
+          pole_station_id: string
+          start_time: string
+          status?: string
+          total_price: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          booking_date?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          notes?: string | null
+          pole_station_id?: string
+          start_time?: string
+          status?: string
+          total_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_pole_station_id_fkey"
+            columns: ["pole_station_id"]
+            isOneToOne: false
+            referencedRelation: "pole_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pole_stations: {
+        Row: {
+          capacity: number
+          created_at: string
+          description: string | null
+          id: string
+          is_available: boolean | null
+          name: string
+          price_per_2hours: number
+          type: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          name: string
+          price_per_2hours: number
+          type: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_available?: boolean | null
+          name?: string
+          price_per_2hours?: number
+          type?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          email: string | null
+          experience_level: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          member_since: string | null
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          experience_level?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          member_since?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          email?: string | null
+          experience_level?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          member_since?: string | null
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
