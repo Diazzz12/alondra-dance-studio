@@ -15,17 +15,25 @@ export const HeroSection = () => {
 
       <div className="container mx-auto px-4 relative z-10">
         <div className="text-center max-w-4xl mx-auto">
-          {/* Badge */}
-          <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-6 animate-fade-up">
-            <Star className="w-4 h-4" />
-            <span>Academia Premier de Pole Dance</span>
+          {/* Logo with elegant styling */}
+          <div className="mb-12 animate-fade-up">
+            <div className="relative inline-block">
+              <div className="absolute -inset-10 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-xl opacity-50"></div>
+              <div className="relative bg-white/10 backdrop-blur-sm rounded-full p-8 shadow-2xl border border-white/20">
+                <img 
+                  src="/logo.png" 
+                  alt="Alondra Pole Space Logo" 
+                  className="h-60 md:h-100 w-auto object-contain drop-shadow-lg"
+                />
+              </div>
+            </div>
           </div>
 
-          {/* Main heading */}
-          <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-up" style={{ animationDelay: '0.2s' }}>
-            <span className="hero-text-gradient">Alondra</span>
+          {/* Main heading - simplified since logo has the text */}
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+            <span className="hero-text-gradient">Tu Espacio</span>
             <br />
-            <span className="text-foreground">Pole Space</span>
+            <span className="text-foreground">de Pole Dance</span>
           </h1>
 
           {/* Subtitle */}
@@ -43,22 +51,6 @@ export const HeroSection = () => {
             <Button variant="outline" size="lg" className="px-8 py-3 text-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground">
               Conoce Más
             </Button>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mt-16 animate-fade-up" style={{ animationDelay: '0.8s' }}>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">500+</div>
-              <div className="text-muted-foreground">Estudiantes</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">5</div>
-              <div className="text-muted-foreground">Años de Experiencia</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">3</div>
-              <div className="text-muted-foreground">Salas Equipadas</div>
-            </div>
           </div>
         </div>
       </div>
