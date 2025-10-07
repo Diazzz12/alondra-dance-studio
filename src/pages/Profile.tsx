@@ -3,9 +3,113 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Phone, Calendar, Award } from "lucide-react";
+import { User, Calendar, Award } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+type Pago = {
+  id: number;
+  cantidad: number;
+  estado: string;
+  fecha_pago: string;
+  tipo: string;
+  transaccion_id: string | null;
+};
+
+type BonoActivo = {
+  id: number;
+  tipo_bono: string;
+  clases_restantes: number;
+  fecha_caducidad: string;
+  dias_restantes: number;
+};
 
 const Profile = () => {
+  const [pagos, setPagos] = useState<Pago[]>([]);
+  const [bonos, setBonos] = useState<BonoActivo[]>([]);
+
+  useEffect(() => {
+    const load = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.id) return;
+
+      // Pagos recientes
+      const { data: pagosData } = await supabase
+        .from("pagos")
+        .select("id,cantidad,estado,fecha_pago,tipo,transaccion_id")
+        .eq("usuario_id", user.user.id)
+        .order("fecha_pago", { ascending: false })
+        .limit(5);
+      setPagos(pagosData || []);
+
+      // Bonos activos con días restantes (usamos la vista si existe; si no, fallback a join)
+      const { data: vista } = await supabase
+        .from("vista_bonos_activos")
+        .select("bono_usuario_id, tipo_bono, clases_restantes, fecha_caducidad, dias_restantes")
+        .eq("usuario_id", user.user.id);
+      if (vista) {
+        setBonos(
+          vista.map((v: any) => ({
+            id: v.bono_usuario_id,
+            tipo_bono: v.tipo_bono,
+            clases_restantes: v.clases_restantes,
+            fecha_caducidad: v.fecha_caducidad,
+            dias_restantes: v.dias_restantes,
+          }))
+        );
+      } else {
+        const { data: bonosData } = await supabase
+          .from("bonos_usuario")
+          .select("id,clases_restantes,fecha_caducidad,estado,tipos_bono(nombre)")
+          .eq("usuario_id", user.user.id)
+          .eq("estado", "activo");
+        setBonos(
+          (bonosData || []).map((b: any) => ({
+            id: b.id,
+            tipo_bono: b.tipos_bono?.nombre ?? "Bono",
+            clases_restantes: b.clases_restantes,
+            fecha_caducidad: b.fecha_caducidad,
+            dias_restantes: Math.max(
+              Math.ceil((new Date(b.fecha_caducidad).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+              0
+            ),
+          }))
+        );
+      }
+    };
+    load();
+    // Suscripción en tiempo real a pagos y bonos del usuario
+    const setupRealtime = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.id) return;
+      const channel = supabase
+        .channel('profile-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos', filter: `usuario_id=eq.${user.user.id}` }, async () => {
+          const { data: pagosData } = await supabase
+            .from('pagos')
+            .select('id,cantidad,estado,fecha_pago,tipo,transaccion_id')
+            .eq('usuario_id', user.user.id)
+            .order('fecha_pago', { ascending: false })
+            .limit(5);
+          setPagos(pagosData || []);
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'bonos_usuario', filter: `usuario_id=eq.${user.user.id}` }, async () => {
+          const { data: vista } = await supabase
+            .from('vista_bonos_activos')
+            .select('bono_usuario_id, tipo_bono, clases_restantes, fecha_caducidad, dias_restantes')
+            .eq('usuario_id', user.user.id);
+          if (vista) {
+            setBonos(vista.map((v: any) => ({ id: v.bono_usuario_id, tipo_bono: v.tipo_bono, clases_restantes: v.clases_restantes, fecha_caducidad: v.fecha_caducidad, dias_restantes: v.dias_restantes })));
+          }
+        })
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+    setupRealtime();
+  }, []);
   return (
     <div className="min-h-screen pt-20 pb-8 bg-secondary/30">
       <div className="container mx-auto px-4">
@@ -110,41 +214,48 @@ const Profile = () => {
                 </CardContent>
               </Card>
 
-              {/* Recent Activity */}
+              {/* Pagos recientes */}
               <Card className="elegant-shadow">
                 <CardHeader>
-                  <CardTitle className="text-lg">Actividad Reciente</CardTitle>
+                <CardTitle className="text-lg">Pagos recientes</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
+                  {pagos.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Aún no hay pagos registrados.</p>
+                  )}
+                  {pagos.map((p) => (
+                    <div key={p.id} className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-medium">Clase Individual</p>
-                        <p className="text-xs text-muted-foreground">15 Enero 2024</p>
+                        <p className="text-sm font-medium">{p.tipo === 'bono' ? 'Compra de bono' : 'Reserva'}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(p.fecha_pago).toLocaleString()}</p>
                       </div>
-                      <Badge variant="outline" className="text-xs">Completada</Badge>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm">€{p.cantidad.toFixed(2)}</span>
+                        <Badge variant="outline" className="text-xs capitalize">{p.estado}</Badge>
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                </CardContent>
+              </Card>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
+              {/* Bonos activos */}
+              <Card className="elegant-shadow">
+                <CardHeader>
+                  <CardTitle className="text-lg">Bonos activos</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {bonos.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No tienes bonos activos.</p>
+                  )}
+                  {bonos.map((b) => (
+                    <div key={b.id} className="flex justify-between items-start">
                       <div>
-                        <p className="text-sm font-medium">Clase Individual</p>
-                        <p className="text-xs text-muted-foreground">12 Enero 2024</p>
+                        <p className="text-sm font-medium">{b.tipo_bono}</p>
+                        <p className="text-xs text-muted-foreground">Caduca: {new Date(b.fecha_caducidad).toLocaleDateString()} ({b.dias_restantes} días)</p>
                       </div>
-                      <Badge variant="outline" className="text-xs">Completada</Badge>
+                      <Badge variant="secondary" className="text-xs">{b.clases_restantes} clases</Badge>
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm font-medium">Clase en Pareja</p>
-                        <p className="text-xs text-muted-foreground">8 Enero 2024</p>
-                      </div>
-                      <Badge variant="outline" className="text-xs">Completada</Badge>
-                    </div>
-                  </div>
+                  ))}
                 </CardContent>
               </Card>
 
