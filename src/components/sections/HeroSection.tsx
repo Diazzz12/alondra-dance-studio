@@ -38,18 +38,17 @@ export const HeroSection = () => {
 
           {/* Subtitle */}
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-2xl mx-auto animate-fade-up" style={{ animationDelay: '0.4s' }}>
-            Descubre tu fuerza interior y transforma tu cuerpo en nuestro estudio de pole dance. 
-            Clases para todos los niveles en un ambiente seguro y empoderador.
+          Tu espacio de Pole Dance para entrenar libremente. Reserva tu espacio y entrena a tu ritmo.
           </p>
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-up" style={{ animationDelay: '0.6s' }}>
             <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-lg elegant-shadow">
-              Reservar Clase
+              Reservar Espacio
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
             <Button variant="outline" size="lg" className="px-8 py-3 text-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-              Conoce Más
+              Contacta con nosotros
             </Button>
           </div>
         </div>

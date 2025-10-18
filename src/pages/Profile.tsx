@@ -1,10 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, Calendar, Award } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { User } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
 type Pago = {
@@ -24,23 +25,87 @@ type BonoActivo = {
   dias_restantes: number;
 };
 
+type Reserva = {
+  id: number;
+  fecha: string;
+  estado: string;
+  franja_horaria_id: number;
+  tipo_reserva_id: number;
+  metodo_pago?: string;
+  bono_usuario_id?: number | null;
+  numero_barras?: number;
+};
+
 const Profile = () => {
   const [pagos, setPagos] = useState<Pago[]>([]);
   const [bonos, setBonos] = useState<BonoActivo[]>([]);
+  const [reservasActivas, setReservasActivas] = useState<Reserva[]>([]);
+  const [reservasAnteriores, setReservasAnteriores] = useState<Reserva[]>([]);
+  const [editorAbierto, setEditorAbierto] = useState<boolean>(false);
+  const [firstName, setFirstName] = useState<string>("");
+  const [lastName, setLastName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [birthDate, setBirthDate] = useState<string>("");
+  const [experience, setExperience] = useState<string>("");
+  const [saving, setSaving] = useState<boolean>(false);
 
   useEffect(() => {
     const load = async () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user?.user?.id) return;
 
-      // Pagos recientes
-      const { data: pagosData } = await supabase
-        .from("pagos")
-        .select("id,cantidad,estado,fecha_pago,tipo,transaccion_id")
+      // Cargar datos de perfil (tabla profiles o fallback a perfiles)
+      setEmail(user.user.email ?? "");
+      try {
+        const { data: prof } = await supabase
+          .from("profiles")
+          .select("first_name,last_name,email,phone,birth_date,experience_level")
+          .eq("user_id", user.user.id)
+          .single();
+        if (prof) {
+          setFirstName(prof.first_name ?? "");
+          setLastName(prof.last_name ?? "");
+          setEmail((prof.email as string) ?? (user.user.email ?? ""));
+          setPhone(prof.phone ?? "");
+          setBirthDate(prof.birth_date ?? "");
+          setExperience(prof.experience_level ?? "");
+        }
+      } catch {}
+      if (!firstName && !lastName && !phone) {
+        const { data: perf } = await supabase
+          .from("perfiles" as any)
+          .select("nombre,telefono")
+          .eq("id", user.user.id)
+          .single();
+        if (perf) {
+          const partes = String(perf.nombre ?? "").split(" ");
+          setFirstName(partes[0] ?? "");
+          setLastName(partes.slice(1).join(" ") ?? "");
+          setPhone(perf.telefono ?? "");
+        }
+      }
+
+      // Reservas del usuario
+      const { data: reservasData } = await supabase
+        .from("reservas")
+        .select("id, fecha, estado, franja_horaria_id, tipo_reserva_id, metodo_pago, bono_usuario_id, numero_barras")
         .eq("usuario_id", user.user.id)
-        .order("fecha_pago", { ascending: false })
-        .limit(5);
-      setPagos(pagosData || []);
+        .order("fecha", { ascending: false });
+
+      const hoy = new Date();
+      const activas: Reserva[] = [];
+      const anteriores: Reserva[] = [];
+      (reservasData || []).forEach((r: any) => {
+        const fecha = new Date(r.fecha);
+        if ((r.estado === 'confirmada' || r.estado === 'pendiente') && fecha >= new Date(hoy.toDateString())) {
+          activas.push(r as Reserva);
+        } else {
+          anteriores.push(r as Reserva);
+        }
+      });
+      setReservasActivas(activas);
+      setReservasAnteriores(anteriores);
 
       // Bonos activos con días restantes (usamos la vista si existe; si no, fallback a join)
       const { data: vista } = await supabase
@@ -78,21 +143,12 @@ const Profile = () => {
       }
     };
     load();
-    // Suscripción en tiempo real a pagos y bonos del usuario
+    // Suscripción en tiempo real a bonos del usuario
     const setupRealtime = async () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user?.user?.id) return;
       const channel = supabase
         .channel('profile-realtime')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'pagos', filter: `usuario_id=eq.${user.user.id}` }, async () => {
-          const { data: pagosData } = await supabase
-            .from('pagos')
-            .select('id,cantidad,estado,fecha_pago,tipo,transaccion_id')
-            .eq('usuario_id', user.user.id)
-            .order('fecha_pago', { ascending: false })
-            .limit(5);
-          setPagos(pagosData || []);
-        })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bonos_usuario', filter: `usuario_id=eq.${user.user.id}` }, async () => {
           const { data: vista } = await supabase
             .from('vista_bonos_activos')
@@ -102,6 +158,26 @@ const Profile = () => {
             setBonos(vista.map((v: any) => ({ id: v.bono_usuario_id, tipo_bono: v.tipo_bono, clases_restantes: v.clases_restantes, fecha_caducidad: v.fecha_caducidad, dias_restantes: v.dias_restantes })));
           }
         })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'reservas', filter: `usuario_id=eq.${user.user.id}` }, async () => {
+          const { data: reservasData } = await supabase
+            .from('reservas')
+            .select('id, fecha, estado, franja_horaria_id, tipo_reserva_id, metodo_pago, bono_usuario_id, numero_barras')
+            .eq('usuario_id', user.user.id)
+            .order('fecha', { ascending: false });
+          const hoy = new Date();
+          const activas: Reserva[] = [];
+          const anteriores: Reserva[] = [];
+          (reservasData || []).forEach((r: any) => {
+            const fecha = new Date(r.fecha);
+            if ((r.estado === 'confirmada' || r.estado === 'pendiente') && fecha >= new Date(hoy.toDateString())) {
+              activas.push(r as Reserva);
+            } else {
+              anteriores.push(r as Reserva);
+            }
+          });
+          setReservasActivas(activas);
+          setReservasAnteriores(anteriores);
+        })
         .subscribe();
 
       return () => {
@@ -110,6 +186,43 @@ const Profile = () => {
     };
     setupRealtime();
   }, []);
+
+  const guardarPerfil = async () => {
+    setSaving(true);
+    const { data: user } = await supabase.auth.getUser();
+    if (!user?.user?.id) {
+      setSaving(false);
+      return;
+    }
+    try {
+      // Actualizar email en auth si cambió
+      if (email && email !== (user.user.email ?? "")) {
+        await supabase.auth.updateUser({ email });
+      }
+      // Upsert en profiles
+      await supabase.from("profiles").upsert({
+        user_id: user.user.id,
+        first_name: firstName || null,
+        last_name: lastName || null,
+        email: email || null,
+        phone: phone || null,
+        birth_date: birthDate || null,
+        experience_level: experience || null,
+      }, { onConflict: "user_id" } as any);
+    } catch (e) {
+      // Fallback: upsert en perfiles (si existe ese esquema)
+      try {
+        await (supabase as any).from("perfiles").upsert({
+          id: user.user.id,
+          nombre: [firstName, lastName].filter(Boolean).join(" ") || null,
+          telefono: phone || null,
+        }, { onConflict: "id" });
+      } catch {}
+    } finally {
+      setSaving(false);
+      setEditorAbierto(false);
+    }
+  };
   return (
     <div className="min-h-screen pt-20 pb-8 bg-secondary/30">
       <div className="container mx-auto px-4">
@@ -123,167 +236,154 @@ const Profile = () => {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Profile Form */}
-            <Card className="lg:col-span-2 elegant-shadow">
+          <div className="space-y-8">
+            {/* Encabezado y botón único de edición */}
+            <Card className="elegant-shadow">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-primary" />
-                  <span>Información Personal</span>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="flex items-center space-x-2">
+                    <User className="w-5 h-5 text-primary" />
+                    <span>Información personal</span>
+                  </span>
+                  <Button className="bg-primary hover:bg-primary/90" onClick={() => setEditorAbierto((v) => !v)}>
+                    {editorAbierto ? "Cerrar" : "Editar información"}
+                  </Button>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstName">Nombre</Label>
-                    <Input id="firstName" placeholder="Tu nombre" />
+              {editorAbierto && (
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">Nombre</Label>
+                      <Input id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Apellidos</Label>
+                      <Input id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">Apellidos</Label>
-                    <Input id="lastName" placeholder="Tus apellidos" />
+                    <Label htmlFor="email">Correo electrónico</Label>
+                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                   </div>
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Teléfono</Label>
+                    <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="birthDate">Fecha de nacimiento</Label>
+                      <Input id="birthDate" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="experience">Nivel de experiencia</Label>
+                      <select id="experience" value={experience} onChange={(e) => setExperience(e.target.value)} className="w-full p-2 border border-input rounded-md bg-background">
+                        <option value="">Seleccionar nivel</option>
+                        <option value="beginner">Principiante</option>
+                        <option value="intermediate">Intermedio</option>
+                        <option value="advanced">Avanzado</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex gap-4 pt-2">
+                    <Button className="bg-primary hover:bg-primary/90" onClick={guardarPerfil} disabled={saving}>
+                      {saving ? "Guardando..." : "Guardar"}
+                    </Button>
+                    <Button variant="outline" onClick={() => setEditorAbierto(false)}>Cancelar</Button>
+                  </div>
+                </CardContent>
+              )}
+            </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="tu@email.com" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Teléfono</Label>
-                  <Input id="phone" placeholder="+34 123 456 789" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
-                  <Input id="birthDate" type="date" />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="experience">Nivel de Experiencia</Label>
-                  <select className="w-full p-2 border border-input rounded-md bg-background">
-                    <option value="">Seleccionar nivel</option>
-                    <option value="beginner">Principiante</option>
-                    <option value="intermediate">Intermedio</option>
-                    <option value="advanced">Avanzado</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-4 pt-4">
-                  <Button className="flex-1 bg-primary hover:bg-primary/90">
-                    Guardar Cambios
-                  </Button>
-                  <Button variant="outline" className="flex-1">
-                    Cancelar
-                  </Button>
-                </div>
+            {/* Reservas activas */}
+            <Card className="elegant-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">Reservas activas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {reservasActivas.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No tienes reservas activas.</p>
+                )}
+                {reservasActivas.map((r) => {
+                  const esSala = (r.numero_barras ?? 1) >= 3;
+                  const usandoBono = (r.metodo_pago || '').toLowerCase() === 'bono' || !!r.bono_usuario_id;
+                  const titulo = esSala
+                    ? 'Reserva sala completa'
+                    : usandoBono
+                      ? 'Barra suelta (usando bono)'
+                      : 'Barra suelta';
+                  return (
+                    <div key={r.id} className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium">{titulo}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(r.fecha).toLocaleString()}</p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs capitalize">{r.estado}</Badge>
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
 
-            {/* Stats & Activity */}
-            <div className="space-y-6">
-              {/* Profile Stats */}
-              <Card className="elegant-shadow">
-                <CardHeader>
-                  <CardTitle className="text-lg">Mi Progreso</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="w-4 h-4 text-primary" />
-                      <span className="text-sm">Clases Tomadas</span>
-                    </div>
-                    <Badge variant="secondary">12</Badge>
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <Award className="w-4 h-4 text-primary" />
-                      <span className="text-sm">Nivel Actual</span>
-                    </div>
-                    <Badge className="bg-primary">Intermedio</Badge>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <User className="w-4 h-4 text-primary" />
-                      <span className="text-sm">Miembro desde</span>
-                    </div>
-                    <span className="text-sm text-muted-foreground">Enero 2024</span>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Pagos recientes */}
-              <Card className="elegant-shadow">
-                <CardHeader>
-                <CardTitle className="text-lg">Pagos recientes</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {pagos.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Aún no hay pagos registrados.</p>
-                  )}
-                  {pagos.map((p) => (
-                    <div key={p.id} className="flex justify-between items-start">
+            {/* Reservas anteriores */}
+            <Card className="elegant-shadow">
+              <CardHeader>
+                <CardTitle className="text-lg">Reservas anteriores</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {reservasAnteriores.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Aún no hay reservas anteriores.</p>
+                )}
+                {reservasAnteriores.map((r) => {
+                  const esSala = (r.numero_barras ?? 1) >= 3;
+                  const usandoBono = (r.metodo_pago || '').toLowerCase() === 'bono' || !!r.bono_usuario_id;
+                  const titulo = esSala
+                    ? 'Reserva sala completa'
+                    : usandoBono
+                      ? 'Barra suelta (usando bono)'
+                      : 'Barra suelta';
+                  return (
+                    <div key={r.id} className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium">{p.tipo === 'bono' ? 'Compra de bono' : 'Reserva'}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(p.fecha_pago).toLocaleString()}</p>
+                        <p className="text-sm font-medium">{titulo}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(r.fecha).toLocaleString()}</p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm">€{p.cantidad.toFixed(2)}</span>
-                        <Badge variant="outline" className="text-xs capitalize">{p.estado}</Badge>
-                      </div>
+                      <Badge variant="outline" className="text-xs capitalize">{r.estado}</Badge>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
+                  );
+                })}
+              </CardContent>
+            </Card>
 
-              {/* Bonos activos */}
-              <Card className="elegant-shadow">
-                <CardHeader>
-                  <CardTitle className="text-lg">Bonos activos</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {bonos.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No tienes bonos activos.</p>
-                  )}
-                  {bonos.map((b) => (
-                    <div key={b.id} className="flex justify-between items-start">
-                      <div>
-                        <p className="text-sm font-medium">{b.tipo_bono}</p>
-                        <p className="text-xs text-muted-foreground">Caduca: {new Date(b.fecha_caducidad).toLocaleDateString()} ({b.dias_restantes} días)</p>
-                      </div>
-                      <Badge variant="secondary" className="text-xs">{b.clases_restantes} clases</Badge>
+            {/* Bonos activos */}
+            <Card className="elegant-shadow">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between text-lg">
+                  <span>Bonos activos</span>
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/bonos">Comprar Bono</Link>
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {bonos.length === 0 && (
+                  <p className="text-sm text-muted-foreground">No tienes bonos activos.</p>
+                )}
+                {bonos.map((b) => (
+                  <div key={b.id} className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium">{b.tipo_bono}</p>
+                      <p className="text-xs text-muted-foreground">Caduca: {new Date(b.fecha_caducidad).toLocaleDateString()} ({b.dias_restantes} días)</p>
+                      <p className="text-xs text-muted-foreground mt-1">Puede reservar: {b.tipo_bono.toLowerCase().includes('mañanas') ? 'solo mañanas' : 'tarde/punta'}</p>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              {/* Quick Actions */}
-              <Card className="elegant-shadow">
-                <CardContent className="pt-6">
-                  <div className="space-y-3">
-                    <Button className="w-full" variant="outline">
-                      Ver Historial Completo
-                    </Button>
-                    <Button className="w-full bg-primary hover:bg-primary/90">
-                      Reservar Nueva Clase
-                    </Button>
+                    <Badge variant="secondary" className="text-xs">{b.clases_restantes} clases</Badge>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Note about database connection */}
-          <div className="mt-12 p-6 bg-muted/50 rounded-lg text-center">
-            <p className="text-muted-foreground mb-4">
-              🔒 Para habilitar el guardado de perfil y funcionalidades completas, conecta tu proyecto a Supabase
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Una vez conectado, podrás guardar tu información, ver tu historial real y gestionar tus reservas
-            </p>
-          </div>
+          {/* Nota eliminada por requerimiento: simplificar a botón + reservas + bonos */}
         </div>
       </div>
     </div>

@@ -89,25 +89,33 @@ Deno.serve(async (req) => {
 
     let precioFinal = precio;
     let cuponId: number | null = null;
+
+    // Validación opcional de cupón (vía RPC)
     if (body.couponCode && body.couponCode.trim()) {
+      console.log("→ Recibido couponCode:", body.couponCode);
       const { data: u } = await sb.auth.getUser();
-      const { data: profile, error: eProf } = await sb.from("perfiles").select("id").eq("id", u?.user?.id).maybeSingle();
-      if (eProf) throw eProf;
-      if (!profile) return new Response(JSON.stringify({ error: "perfil no encontrado" }), { status: 404, headers: { "Content-Type": "application/json", ...corsHeaders } });
       const { data: res, error: eVal } = await sb.rpc("validar_cupon", {
         _codigo: body.couponCode,
-        _usuario_id: profile.id,
+        _usuario_id: u?.user?.id,
         _tipo_item: body.itemType,
         _item_id: itemId,
         _precio: precio
       });
-      if (eVal) throw eVal;
+      if (eVal) {
+        console.error("✗ validar_cupon error:", eVal);
+        throw eVal;
+      }
+      console.log("validar_cupon →", res);
       if (Array.isArray(res) && res.length) {
-        const row = res[0] as any;
-        if (row.valido) {
-          precioFinal = Number(row.precio_final);
-          cuponId = row.cupon_id ?? null;
+        if (res[0].valido) {
+          precioFinal = Number(res[0].precio_final);
+          cuponId = Number(res[0].cupon_id);
+          console.log("✓ Cupón válido. Precio final:", precioFinal, "cupon_id:", cuponId);
+        } else {
+          console.log("⚠ Cupón no válido. Motivo:", res[0].motivo);
         }
+      } else {
+        console.log("⚠ validar_cupon no devolvió filas");
       }
     }
 

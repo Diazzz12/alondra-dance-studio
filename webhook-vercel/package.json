@@ -1,0 +1,26 @@
+{
+  "name": "stripe-webhook-vercel",
+  "version": "1.0.0",
+  "description": "Webhook de Stripe para reservas",
+  "main": "api/stripe-webhook.js",
+  "dependencies": {
+    "stripe": "^16.8.0",
+    "@supabase/supabase-js": "^2.39.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,16 +1,32 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { startCheckout } from "@/lib/checkout";
+import { Input } from "@/components/ui/input";
 
 const Booking = () => {
   const [selectedOption, setSelectedOption] = useState<string>("barra");
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [times, setTimes] = useState<{ label: string; franjaId: number; tipoReservaId: number; disabled: boolean }[]>([]);
+  const [times, setTimes] = useState<{ label: string; franjaId: number; tipoReservaId: number; disponibles: number; disabled: boolean }[]>([]);
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [tiposCatalogo, setTiposCatalogo] = useState<{
+    oneBarId: number | null;
+    oneBarPrice: number | null;
+    threeBarsId: number | null;
+    threeBarsPrice: number | null;
+    oneBarMorningId?: number | null;
+    oneBarMorningPrice?: number | null;
+    oneBarAfternoonId?: number | null;
+    oneBarAfternoonPrice?: number | null;
+  }>({ oneBarId: null, oneBarPrice: null, threeBarsId: null, threeBarsPrice: null, oneBarMorningId: null, oneBarMorningPrice: null, oneBarAfternoonId: null, oneBarAfternoonPrice: null });
+  const [bonoDisponible, setBonoDisponible] = useState<{ bono_usuario_id: number; clases_restantes: number; fecha_caducidad: string; tipo_bono?: string } | null>(null);
+  const [loadingAction, setLoadingAction] = useState<boolean>(false);
+  const [coupon, setCoupon] = useState<string>("");
+  const [couponStatus, setCouponStatus] = useState<"valid" | "invalid" | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -37,7 +53,7 @@ const Booking = () => {
       const weekday = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"][date.getDay()];
 
       // 1) Traer franjas activas del día seleccionado
-      const { data: franjas, error: e1 } = await supabase
+      const { data: franjas, error: e1 } = await (supabase as any)
         .from("franjas_horarias")
         .select("id,hora_inicio,hora_fin,tipo_reserva_id,activo")
         .eq("dia_semana", weekday)
@@ -51,7 +67,7 @@ const Booking = () => {
 
       // 2) Traer disponibilidad agregada para esa fecha (puede no devolver filas para franjas sin reservas)
       const fechaISO = date.toISOString().slice(0,10);
-      const { data: disp, error: e2 } = await supabase
+      const { data: disp, error: e2 } = await (supabase as any)
         .from("vista_disponibilidad_diaria")
         .select("franja_horaria_id,barras_reservadas,barras_disponibles,fecha")
         .eq("fecha", fechaISO);
@@ -76,12 +92,97 @@ const Booking = () => {
           const nowMs = today.getHours() * 60 + today.getMinutes();
           if (timeMs <= nowMs) disabled = true;
         }
-        return { label, franjaId: f.id as number, tipoReservaId: Number(f.tipo_reserva_id), disabled };
+        return { label, franjaId: f.id as number, tipoReservaId: Number(f.tipo_reserva_id), disponibles, disabled };
       });
       setTimes(items);
     };
     load();
   }, [date, selectedOption]);
+
+  // Cargar catálogo de tipos (1 barra mañana/tarde y 3 barras) una vez
+  useEffect(() => {
+    const loadTipos = async () => {
+      const { data, error } = await (supabase as any)
+        .from("tipos_reserva")
+        .select("id,nombre,numero_barras,precio_entrada,activo")
+        .eq("activo", true);
+      if (error) {
+        console.error(error);
+        return;
+      }
+      const ones = (data || []).filter((t: any) => Number(t.numero_barras) === 1);
+      const oneMorning = ones.find((t: any) => Number(t.id) === 4) || ones.find((t: any) => String(t.nombre).toLowerCase().includes('mañ')); // prefer id 4
+      const oneAfternoon = ones.find((t: any) => Number(t.id) !== (oneMorning ? Number(oneMorning.id) : -1)) || null;
+      const oneFallback = ones[0] || null;
+      const three = (data || []).find((t: any) => Number(t.numero_barras) === 3);
+      setTiposCatalogo({
+        oneBarId: oneFallback ? Number(oneFallback.id) : null,
+        oneBarPrice: oneFallback ? Number(oneFallback.precio_entrada) : null,
+        threeBarsId: three ? Number(three.id) : null,
+        threeBarsPrice: three ? Number(three.precio_entrada) : null,
+        oneBarMorningId: oneMorning ? Number(oneMorning.id) : (oneFallback ? Number(oneFallback.id) : null),
+        oneBarMorningPrice: oneMorning ? Number(oneMorning.precio_entrada) : (oneFallback ? Number(oneFallback.precio_entrada) : null),
+        oneBarAfternoonId: oneAfternoon ? Number(oneAfternoon.id) : (oneFallback ? Number(oneFallback.id) : null),
+        oneBarAfternoonPrice: oneAfternoon ? Number(oneAfternoon.precio_entrada) : (oneFallback ? Number(oneFallback.precio_entrada) : null),
+      });
+    };
+    loadTipos();
+  }, []);
+
+  // Comprobar bono activo si se escoge "bono"
+  useEffect(() => {
+    const loadBono = async () => {
+      if (selectedOption !== "bono") {
+        setBonoDisponible(null);
+        return;
+      }
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.id) {
+        setBonoDisponible(null);
+        return;
+      }
+      const { data, error } = await (supabase as any)
+        .from("vista_bonos_activos")
+        .select("bono_usuario_id,clases_restantes,fecha_caducidad,tipo_bono")
+        .eq("usuario_id", user.user.id)
+        .order("fecha_caducidad", { ascending: true });
+      if (error) {
+        console.error(error);
+        setBonoDisponible(null);
+        return;
+      }
+      const elegible = (data || []).find((b: any) => Number(b.clases_restantes) > 0);
+      if (elegible) {
+        setBonoDisponible({
+          bono_usuario_id: Number(elegible.bono_usuario_id),
+          clases_restantes: Number(elegible.clases_restantes),
+          fecha_caducidad: String(elegible.fecha_caducidad),
+          tipo_bono: String(elegible.tipo_bono),
+        });
+      } else {
+        setBonoDisponible(null);
+      }
+    };
+    loadBono();
+  }, [selectedOption]);
+
+  const franjaParteDia = useMemo(() => {
+    if (!selectedTime) return "";
+    const [hhStr] = selectedTime.split(":");
+    const hh = Number(hhStr);
+    if (hh < 14) return "Mañana";
+    if (hh < 24) return "Tarde";
+    return "Noche";
+  }, [selectedTime]);
+
+  const isMorning = useMemo(() => {
+    if (!selectedTime) return false;
+    const [hhStr] = selectedTime.split(":");
+    const hh = Number(hhStr);
+    return hh < 14;
+  }, [selectedTime]);
+
+  
 
   return (
     <div className="min-h-screen pt-20 pb-8 bg-secondary/30">
@@ -121,6 +222,7 @@ const Booking = () => {
                   selected={date}
                   onSelect={setDate}
                   captionLayout="dropdown"
+                  locale={es}
                   className="rounded-md border shadow-sm"
                 />
               </div>
@@ -149,28 +251,215 @@ const Booking = () => {
                     })}
                   </div>
                   {selectedTime && (
-                    <div className="mt-4 flex items-center justify-between">
-                      <p className="text-sm text-muted-foreground">Seleccionado: {selectedTime}</p>
-                      <Button
-                        onClick={async () => {
-                          if (!date) return;
-                          const sel = times.find(t => t.label === selectedTime);
-                          if (!sel) return;
-                          const fechaISO = date.toISOString().slice(0,10);
-                          await startCheckout({
-                            itemType: 'tipo_reserva',
-                            itemId: sel.tipoReservaId,
-                            successUrl: window.location.origin + '/?pago=ok',
-                            cancelUrl: window.location.origin + '/?pago=cancelado',
-                            fecha: fechaISO,
-                            franjaId: sel.franjaId,
-                            tipoReservaId: sel.tipoReservaId,
-                          });
-                        }}
-                        className="h-9"
-                      >
-                        Reservar y pagar
-                      </Button>
+                    <div className="mt-6 space-y-3">
+                      <Card className="elegant-shadow">
+                        <CardHeader>
+                          <CardTitle className="text-base">Resumen</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Modalidad</span>
+                            <span className="font-medium">
+                              {selectedOption === 'barra' && 'Barra suelta'}
+                              {selectedOption === 'bono' && 'Bono (1 uso)'}
+                              {selectedOption === 'sala' && 'Sala completa'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Fecha</span>
+                            <span className="font-medium">{date?.toLocaleDateString()}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Horario</span>
+                            <span className="font-medium">{selectedTime} · {franjaParteDia}</span>
+                          </div>
+                          {selectedOption !== 'bono' && (
+                            <>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Precio</span>
+                                <span className="font-semibold">€{
+                                  (
+                                    selectedOption === 'sala'
+                                      ? (tiposCatalogo.threeBarsPrice ?? 0)
+                                      : (isMorning ? (tiposCatalogo.oneBarMorningPrice ?? tiposCatalogo.oneBarPrice ?? 0) : (tiposCatalogo.oneBarAfternoonPrice ?? tiposCatalogo.oneBarPrice ?? 0))
+                                  ).toFixed(2)
+                                }</span>
+                              </div>
+                              <div className="mt-3 max-w-sm">
+                                <label htmlFor="coupon" className="block text-xs mb-1 text-muted-foreground">Código de descuento</label>
+                                <div className="flex gap-2">
+                                  <Input id="coupon" placeholder="Introduce tu cupón" value={coupon} onChange={(e) => { setCoupon(e.target.value); setCouponStatus(null); }} />
+                                  <Button
+                                    variant="outline"
+                                    className="h-9"
+                                    onClick={async () => {
+                                      try {
+                                        if (!coupon.trim()) { setCouponStatus('invalid'); return; }
+                                        const { data: user } = await supabase.auth.getUser();
+                                        if (!user?.user?.id) { setCouponStatus('invalid'); return; }
+                                        const itemType = 'tipo_reserva';
+                                        const itemId = (selectedOption === 'sala'
+                                          ? tiposCatalogo.threeBarsId ?? null
+                                          : (isMorning ? tiposCatalogo.oneBarMorningId ?? tiposCatalogo.oneBarId ?? null : tiposCatalogo.oneBarAfternoonId ?? tiposCatalogo.oneBarId ?? null)
+                                        );
+                                        if (!itemId) { setCouponStatus('invalid'); return; }
+                                        const precio = (selectedOption === 'sala'
+                                          ? (tiposCatalogo.threeBarsPrice ?? 0)
+                                          : (isMorning ? (tiposCatalogo.oneBarMorningPrice ?? tiposCatalogo.oneBarPrice ?? 0) : (tiposCatalogo.oneBarAfternoonPrice ?? tiposCatalogo.oneBarPrice ?? 0))
+                                        );
+                                        const { data, error } = await (supabase as any).rpc('validar_cupon', {
+                                          _codigo: coupon.trim(),
+                                          _usuario_id: user.user.id,
+                                          _tipo_item: itemType,
+                                          _item_id: itemId,
+                                          _precio: precio
+                                        });
+                                        if (error) { console.error(error); setCouponStatus('invalid'); return; }
+                                        if (Array.isArray(data) && data.length && data[0].valido) {
+                                          setCouponStatus('valid');
+                                        } else {
+                                          setCouponStatus('invalid');
+                                        }
+                                      } catch (e) {
+                                        console.error(e);
+                                        setCouponStatus('invalid');
+                                      }
+                                    }}
+                                  >
+                                    Validar
+                                  </Button>
+                                </div>
+                                {couponStatus === 'valid' && (
+                                  <p className="text-xs text-green-600 mt-1">Cupón válido. Se aplicará al pagar.</p>
+                                )}
+                                {couponStatus === 'invalid' && (
+                                  <p className="text-xs text-destructive mt-1">Cupón inválido.</p>
+                                )}
+                              </div>
+                            </>
+                          )}
+                          
+                          {selectedOption === 'bono' && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Bono</span>
+                              <span className="font-medium">
+                                {bonoDisponible
+                                  ? `${bonoDisponible.clases_restantes} usos restantes · caduca ${new Date(bonoDisponible.fecha_caducidad).toLocaleDateString()}`
+                                  : 'No tienes bonos activos'}
+                              </span>
+                            </div>
+                          )}
+                          {/* Disponibilidad de barras para la franja seleccionada */}
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Barras disponibles</span>
+                            <span className="font-medium">
+                              {(() => {
+                                const sel = times.find(t => t.label === selectedTime);
+                                return sel ? sel.disponibles : 0;
+                              })()}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <div className="flex items-center justify-between">
+                        {selectedOption === 'bono' && !bonoDisponible ? (
+                          <>
+                            <p className="text-sm text-destructive">Necesitas comprar un bono antes de reservar con bono.</p>
+                            <Button
+                              variant="outline"
+                              className="h-9"
+                              onClick={() => { window.location.href = '/?pre=bonos'; }}
+                            >
+                              Comprar bono
+                            </Button>
+                          </>
+                        ) : (
+                          <Button
+                            disabled={loadingAction}
+                            onClick={async () => {
+                              if (!date) return;
+                              const sel = times.find(t => t.label === selectedTime);
+                              if (!sel) return;
+                              const fechaISO = date.toISOString().slice(0,10);
+                              try {
+                                setLoadingAction(true);
+                                if (selectedOption === 'bono') {
+                                  const { data: user } = await supabase.auth.getUser();
+                                  if (!user?.user?.id || !bonoDisponible) return;
+                                  // Validación de tramo horario según tipo de bono
+                                  const bonoEsMananas = (bonoDisponible.tipo_bono || '').toLowerCase().includes('mañanas');
+                                  if (bonoEsMananas && !isMorning) {
+                                    alert('Este bono solo es válido para mañanas. Elige un horario antes de las 14:00.');
+                                    return;
+                                  }
+                                  const bonoEsTarde = (bonoDisponible.tipo_bono || '').toLowerCase().includes('tarde');
+                                  const bonoEsPunta = (bonoDisponible.tipo_bono || '').toLowerCase().includes('punta');
+                                  if ((bonoEsTarde || bonoEsPunta) && isMorning) {
+                                    alert('Este bono es para tarde/punta. Elige un horario a partir de las 14:00.');
+                                    return;
+                                  }
+                                  const { data: reservaId, error } = await (supabase as any).rpc('crear_reserva', {
+                                    _usuario_id: user.user.id,
+                                    _fecha: fechaISO,
+                                    _franja_id: sel.franjaId,
+                                    _tipo_reserva_id: tiposCatalogo.oneBarId,
+                                    _metodo_pago: 'bono',
+                                    _bono_usuario_id: bonoDisponible.bono_usuario_id,
+                                    _precio_pagado: 0,
+                                  });
+                                  if (error) throw error;
+
+                                  // Enviar email de confirmación
+                                  try {
+                                    console.log('📧 Intentando enviar email para reserva ID:', reservaId);
+                                    if (reservaId) {
+                                      console.log('📧 Llamando a send-booking-email...');
+                                      const emailResponse = await supabase.functions.invoke('send-booking-email', {
+                                        body: { reserva_id: reservaId }
+                                      });
+                                      console.log('📧 Respuesta del email:', emailResponse);
+                                    } else {
+                                      console.log('⚠️ No hay reservaId para enviar email');
+                                    }
+                                  } catch (emailError) {
+                                    console.error('❌ Error enviando email:', emailError);
+                                    console.error('❌ Detalles del error:', emailError.message);
+                                    // No bloqueamos el flujo si falla el email
+                                  }
+
+                                  window.location.href = '/reserva-confirmada';
+                                } else {
+                                  await startCheckout({
+                                      itemType: 'tipo_reserva',
+                                      itemId: (selectedOption === 'sala'
+                                        ? tiposCatalogo.threeBarsId ?? undefined
+                                        : (isMorning ? tiposCatalogo.oneBarMorningId ?? tiposCatalogo.oneBarId ?? undefined : tiposCatalogo.oneBarAfternoonId ?? tiposCatalogo.oneBarId ?? undefined)
+                                      ),
+                                      successUrl: window.location.origin + '/reserva-confirmada',
+                                      cancelUrl: window.location.origin + '/?pago=cancelado',
+                                      fecha: fechaISO,
+                                      franjaId: sel.franjaId,
+                                      tipoReservaId: (selectedOption === 'sala'
+                                        ? tiposCatalogo.threeBarsId ?? undefined
+                                        : (isMorning ? tiposCatalogo.oneBarMorningId ?? tiposCatalogo.oneBarId ?? undefined : tiposCatalogo.oneBarAfternoonId ?? tiposCatalogo.oneBarId ?? undefined)
+                                        ),
+                                      couponCode: coupon || null,
+                                  });
+                                }
+                              } catch (err) {
+                                console.error(err);
+                                alert('No se pudo completar la acción. Inténtalo de nuevo.');
+                              } finally {
+                                setLoadingAction(false);
+                              }
+                            }}
+                            className="h-9"
+                          >
+                            {selectedOption === 'bono' ? 'Reservar con bono' : 'Reservar y pagar'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>

@@ -89,18 +89,19 @@ export const PricingSection = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Planes y <span className="hero-text-gradient">Precios</span>
+            Reserva tu <span className="hero-text-gradient">Espacio</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Elige el plan que mejor se adapte a tus objetivos y presupuesto. 
-            Todos nuestros planes incluyen equipamiento profesional y la guía de instructores certificados.
+          ¿Listo para entrenar en un espacio profesional y flexible? 
+En Alondra Pole Space puedes reservar fácilmente tu espacio de entrenamiento libre en solo unos clics.
+
           </p>
         </div>
 
         {/* Individual */}
         <div className="grid md:grid-cols-2 gap-8 mb-16">
           {individuales.map((plan, index) => (
-            <Card key={index} className={`relative ${plan.popular ? 'ring-2 ring-primary elegant-shadow scale-105' : 'elegant-shadow'} hover:shadow-lg transition-all duration-300`}>
+            <Card key={index} className={`relative ${plan.price ? 'ring-2 ring-primary elegant-shadow scale-105' : 'elegant-shadow'} hover:shadow-lg transition-all duration-300`}>
               <CardHeader className="text-center pb-8">
                 <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
                 <div className="mt-4">
@@ -136,7 +137,7 @@ export const PricingSection = () => {
               </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                 {bonos.map((plan, index) => (
-                  <Card key={index} className="elegant-shadow hover:shadow-lg transition-all duration-300">
+                  <Card key={index} className="elegant-shadow hover:shadow-lg transition-all duration-300 h-full flex flex-col">
                     <CardHeader className="text-center pb-6">
                       <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
                       <div className="mt-3">
@@ -145,7 +146,7 @@ export const PricingSection = () => {
                       </div>
                       <p className="text-muted-foreground mt-2">{plan.description}</p>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="flex flex-col grow">
                       <ul className="space-y-2 mb-6">
                         {plan.features.map((feature, featureIndex) => (
                           <li key={featureIndex} className="flex items-center">
@@ -154,7 +155,15 @@ export const PricingSection = () => {
                           </li>
                         ))}
                       </ul>
-                      <Button variant="outline" className="w-full" onClick={() => (window.location.href = '/reservar?pre=bonos')}>Ver disponibilidad</Button>
+                      <div className="mt-auto">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => (window.location.href = '/bonos')}
+                        >
+                          Comprar
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 ))}

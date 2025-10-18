@@ -20,9 +20,9 @@ export const Navigation = () => {
 
   const navItems = [
     { href: "/", label: "Inicio" },
+    { href: "/#pricing", label: "Ver Precios" },
     ...(user ? [
       { href: "/reservar", label: "Reservar" },
-      { href: "/perfil", label: "Perfil" },
     ] : []),
   ];
 

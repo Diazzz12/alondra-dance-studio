@@ -9,45 +9,37 @@ import { Button } from "@/components/ui/button";
 export const FAQSection = () => {
   const faqs = [
     {
-      question: "¿Necesito experiencia previa para empezar?",
-      answer: "¡Para nada! Nuestras clases están diseñadas para todos los niveles, desde principiantes absolutos hasta avanzados. Nuestros instructores adaptan cada sesión a tu nivel y ritmo de aprendizaje. Lo más importante es venir con ganas de aprender y divertirse."
+      question: "¿Puedo reservar con mi bono la sala entera?",
+      answer: "Sin problema, solo tienes que reservar las 3 barras con el bono y ya dispones de la sala completa para ti."
     },
     {
-      question: "¿Qué debo traer a mi primera clase?",
-      answer: "Solo necesitas ropa cómoda que te permita moverte libremente. Recomendamos shorts o leggings y una camiseta. Nosotros proporcionamos todas las barras, colchonetas y equipamiento necesario. También ofrecemos toallas limpias y agua."
+      question: "¿Puedo reservar con mi bono la sala para otra persona?",
+      answer: "Claro, todos nuestros bonos son no nominales."
+    },
+    {
+      question: "¿Qué debo llevar a la sala?",
+      answer: "Solo necesitas ropa cómoda que te permita moverte libremente. Recomendamos shorts o leggings y una camiseta. Nosotros proporcionamos todas las barras, colchonetas y equipamiento necesario. También ofrecemos esterillas limpias y agua."
     },
     {
       question: "¿Es seguro el pole dance?",
-      answer: "Absolutamente. La seguridad es nuestra prioridad número uno. Nuestras barras están instaladas profesionalmente y se revisan regularmente. Todos nuestros instructores están certificados y enseñan técnicas progresivas que minimizan el riesgo de lesiones. Comenzamos siempre con un calentamiento adecuado."
+      answer: "Absolutamente. La seguridad es nuestra prioridad número uno. Nuestras barras están instaladas se revisan regularmente. No te olvides de comenzar siempre con un calentamiento adecuado, dispones de ellos en la sala"
     },
     {
-      question: "¿Cuánto tiempo duran las clases?",
-      answer: "Cada sesión dura 2 horas completas, lo que nos permite incluir un calentamiento apropiado, técnica, práctica libre y enfriamiento. Este tiempo es ideal para aprender de manera efectiva sin sobrecargarte."
+      question: "¿Cuánto tiempo dura la reserva de 1 barra?",
+      answer: "Cada sesión dura 1 hora y media, lo que permite incluir un calentamiento apropiado, técnica y práctica libre. Este tiempo es ideal para practicar de manera efectiva sin sobrecargarte."
     },
     {
-      question: "¿Puedo reservar con anticipación?",
-      answer: "Sí, puedes reservar hasta con una semana de anticipación. Recomendamos reservar con al menos 24 horas de antelación para garantizar tu lugar, especialmente en horarios populares como tardes y fines de semana."
-    },
-    {
-      question: "¿Qué opciones de reserva tienen?",
-      answer: "Ofrecemos tres opciones: barra individual (perfecta para clases personalizadas), dos barras (ideal para entrenar con una amiga o pareja), y sala completa (hasta 8 personas, perfecta para eventos especiales o grupos)."
+      question: "¿Qué opciones de reserva tengo?",
+      answer: "Ofrecemos la opción de reserva de barra individual, un bono de 10 sesiones con duración de 3 meses o de 5 sesiones mensual."
     },
     {
       question: "¿Cuál es la política de cancelación?",
-      answer: "Puedes cancelar o reprogramar tu clase hasta 24 horas antes sin penalización. Las cancelaciones con menos de 24 horas de anticipación están sujetas a una penalización del 50%. No se realizan devoluciones por ausencias sin previo aviso."
-    },
-    {
-      question: "¿Ofrecen clases para hombres?",
-      answer: "¡Por supuesto! El pole dance es para todos, independientemente del género. Tenemos estudiantes de todos los géneros y edades. Nuestro ambiente es completamente inclusivo y welcoming para todas las personas."
-    },
-    {
-      question: "¿Los bonos tienen fecha de caducidad?",
-      answer: "Sí, el bono de 4 clases tiene una validez de 2 meses y el bono de 8 clases tiene una validez de 3 meses desde la fecha de compra. Esto asegura que mantengas una práctica regular para obtener los mejores resultados."
+      answer: "Puedes cancelar o reprogramar tu clase hasta 24 horas antes sin penalización. Las cancelaciones con menos de 24 horas de anticipación están sujetas a una penalización del 50% (pendiente de ver). No se realizan devoluciones por ausencias sin previo aviso."
     },
     {
       question: "¿Puedo traer un acompañante a ver la clase?",
-      answer: "Para mantener un ambiente cómodo y sin distracciones para todos nuestros estudiantes, las clases son solo para participantes. Sin embargo, organizamos eventos especiales y demostraciones donde familiares y amigos son bienvenidos."
-    }
+      answer: "Para mantener un ambiente cómodo y sin distracciones para toda nuestra comunidad las barras son de uso personal. Sin embargo, puedes reservar la sala completa donde se permiten hasta grupos de 12 personas."
+    },
   ];
 
   return (

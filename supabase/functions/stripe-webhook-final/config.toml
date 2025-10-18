@@ -1,0 +1,18 @@
+[function]
+verify_jwt = false
+
+[function.auth]
+verify_jwt = false
+
+
+
+
+
+
+
+
+
+
+
+
+

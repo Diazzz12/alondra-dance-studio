@@ -9,6 +9,8 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
 import Booking from "./pages/Booking";
+import Bonos from "./pages/Bonos";
+import ReservaConfirmada from "./pages/ReservaConfirmada";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/reservar" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
+            <Route path="/bonos" element={<ProtectedRoute><Bonos /></ProtectedRoute>} />
+            <Route path="/reserva-confirmada" element={<ProtectedRoute><ReservaConfirmada /></ProtectedRoute>} />
             <Route path="/auth" element={<Auth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

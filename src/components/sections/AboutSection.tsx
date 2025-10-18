@@ -1,27 +1,27 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Heart, Users, Award, Shield } from "lucide-react";
+import { HeartPulse, Clock, Dumbbell, UsersRound } from "lucide-react";
 
 export const AboutSection = () => {
   const features = [
     {
-      icon: Heart,
-      title: "Ambiente Empoderador",
-      description: "Un espacio seguro donde puedes explorar tu fuerza y expresión personal sin juicios."
+      icon: HeartPulse,
+      title: "Calentamientos adaptados",
+      description: "En Alondra cuidamos tu cuerpo con calentamientos adaptados a cada nivel, diseñados para mejorar movilidad, fuerza y prevenir lesiones"
     },
     {
-      icon: Users,
-      title: "Comunidad Inclusiva",
-      description: "Únete a nuestra familia donde cada persona es valorada y apoyada en su journey."
+      icon: Clock,
+      title: "Reservas de hora y media",
+      description: "Disfruta de una hora y media completa de entrenamiento libre, el tiempo ideal mejorar tu técnica sin prisas. Aquí entrenas a tu ritmo."
     },
     {
-      icon: Award,
-      title: "Instructores Certificados",
-      description: "Aprende con profesionales experimentados que priorizan tu seguridad y progreso."
+      icon: Dumbbell,
+      title: "Material variado de yoga y pilates",
+      description: "Mejora tu salud con nuestro material variado de yoga y pilates. Ideal para aumentar tu flexibilidad, equilibrar tu cuerpo y complementar tu entrenamiento de pole dance."
     },
     {
-      icon: Shield,
-      title: "Equipamiento Premium",
-      description: "Barras de alta calidad y colchonetas profesionales para tu seguridad y comodidad."
+      icon: UsersRound,
+      title: "Comunidad Alondra",
+      description: "En Alondra encontrarás una comunidad real, cercana y sin juicios, donde cada persona entrena a su ritmo, se apoya y celebra cada progreso."
     }
   ];
 
@@ -30,12 +30,12 @@ export const AboutSection = () => {
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Más que un <span className="hero-text-gradient">Estudio</span>
+            Más que un <span className="hero-text-gradient">Espacio</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            En Alondra Pole Space creemos que el pole dance es mucho más que ejercicio: 
-            es una forma de arte que fortalece el cuerpo, la mente y el espíritu. 
-            Ofrecemos un espacio donde cada persona puede descubrir su potencial único.
+          En Alondra Pole Space te ofrecemos una sala única para entrenar pole dance en todas sus versiones (Pole Sport, Exotic, Dinámico, Flow, Coreo…) en formato open pole y otras disciplinas como yoga o pilates. 
+Sin clases, sin horarios fijos, con total libertad. 
+Nuestro espacio esta diseñado para ofrecerte la mejor experiencia de entrenamiento: Barras, espejos, suelo seguro, iluminación pensado para que mejores tu técnica en un ambiente íntimo y motivador.
           </p>
         </div>
 
@@ -58,29 +58,14 @@ export const AboutSection = () => {
             <div>
               <h3 className="text-3xl font-bold mb-6">Nuestra Historia</h3>
               <p className="text-muted-foreground mb-6">
-                Fundado en 2019, Alondra Pole Space nació de la pasión por crear un espacio 
-                donde las personas pudieran explorar el pole dance en todas sus formas: 
-                fitness, arte y expresión personal.
+              Alondra Pole Space nace con el propósito de ofrecer un espacio especializado en entrenamiento libre de pole dance, donde cada persona pueda desarrollar su técnica y condición física con autonomía, en un entorno cuidado y profesional.
               </p>
               <p className="text-muted-foreground mb-6">
-                Desde nuestros inicios, hemos crecido hasta convertirnos en la academia 
-                de referencia en la ciudad, manteniendo siempre nuestros valores de 
-                inclusión, seguridad y excelencia en la enseñanza.
+              El ave Alondra representa la libertad, la precisión del movimiento y la capacidad de superación. Estos valores inspiran nuestro proyecto: un espacio que fomenta la independencia en el entrenamiento, el bienestar físico y el crecimiento personal.
               </p>
-              <div className="flex items-center space-x-8">
-                <div>
-                  <div className="text-2xl font-bold text-primary">5+</div>
-                  <div className="text-sm text-muted-foreground">Años</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-primary">500+</div>
-                  <div className="text-sm text-muted-foreground">Estudiantes</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-primary">1000+</div>
-                  <div className="text-sm text-muted-foreground">Clases</div>
-                </div>
-              </div>
+              <p className="text-muted-foreground mb-6">
+              En Alondra no impartimos clases dirigidas; cada persona entrena a su ritmo, utilizando una sala equipada para potenciar fuerza, flexibilidad y control corporal. Nuestro objetivo es ofrecer un entorno seguro, funcional y motivador para que cada sesión te acerque a tus metas.              </p>
+              
             </div>
             <div className="relative">
               <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
