@@ -19,3 +19,4 @@ WHERE table_name = 'reservas'
   AND table_schema = 'public'
   AND column_name IN ('codigo_acceso', 'codigo_acceso_id');
 
+
