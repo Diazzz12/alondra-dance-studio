@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Phone } from "lucide-react";
 import { z } from "zod";
 
 const authSchema = z.object({
@@ -16,6 +16,7 @@ const authSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(100, "Contraseña muy larga"),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
+  phone: z.string().optional(),
 });
 
 const Auth = () => {
@@ -26,6 +27,7 @@ const Auth = () => {
     password: "",
     firstName: "",
     lastName: "",
+    phone: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
@@ -58,6 +60,7 @@ const Auth = () => {
       ? authSchema.extend({
           firstName: z.string().min(1, "Nombre requerido").max(50, "Nombre muy largo"),
           lastName: z.string().min(1, "Apellidos requeridos").max(50, "Apellidos muy largos"),
+          phone: z.string().min(1, "Teléfono requerido").max(20, "Teléfono muy largo").regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, "Formato de teléfono inválido"),
         })
       : authSchema.pick({ email: true, password: true });
 
@@ -139,7 +142,7 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data: authData, error } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
         options: {
@@ -147,6 +150,7 @@ const Auth = () => {
           data: {
             first_name: formData.firstName.trim(),
             last_name: formData.lastName.trim(),
+            phone: formData.phone.trim(),
           }
         }
       });
@@ -166,6 +170,27 @@ const Auth = () => {
           });
         }
       } else {
+        // Actualizar el perfil con nombre y teléfono
+        if (authData.user) {
+          const nombreCompleto = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
+          
+          // Intentar actualizar en perfiles (tabla actual)
+          await (supabase as any).from("perfiles").upsert({
+            id: authData.user.id,
+            nombre: nombreCompleto,
+            telefono: formData.phone.trim(),
+          }, { onConflict: "id" });
+
+          // También actualizar en profiles por compatibilidad
+          await supabase.from("profiles").upsert({
+            user_id: authData.user.id,
+            first_name: formData.firstName.trim(),
+            last_name: formData.lastName.trim(),
+            email: formData.email.trim(),
+            phone: formData.phone.trim(),
+          }, { onConflict: "user_id" } as any);
+        }
+
         toast({
           title: "¡Registro exitoso!",
           description: "Revisa tu email para confirmar tu cuenta",
@@ -314,6 +339,25 @@ const Auth = () => {
                     </div>
                     {errors.email && (
                       <p className="text-sm text-destructive">{errors.email}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-phone">Teléfono</Label>
+                    <div className="relative">
+                      <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="signup-phone"
+                        type="tel"
+                        placeholder="+34 600 000 000"
+                        value={formData.phone}
+                        onChange={(e) => handleInputChange("phone", e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p className="text-sm text-destructive">{errors.phone}</p>
                     )}
                   </div>
 

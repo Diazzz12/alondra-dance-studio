@@ -52,20 +52,34 @@ const Booking = () => {
       setSelectedTime("");
       const weekday = ["domingo","lunes","martes","miercoles","jueves","viernes","sabado"][date.getDay()];
 
-      // 1) Traer franjas activas del día seleccionado
+      // 1) Traer todas las franjas activas del día seleccionado
+      // NOTA: Las franjas horarias son COMPARTIDAS entre todos los tipos de reserva
+      // Solo hay UNA franja por hora que comparten barra suelta, sala entera, etc.
       const { data: franjas, error: e1 } = await (supabase as any)
         .from("franjas_horarias")
         .select("id,hora_inicio,hora_fin,tipo_reserva_id,activo")
         .eq("dia_semana", weekday)
         .eq("activo", true)
         .order("hora_inicio");
+      
       if (e1) {
         console.error(e1);
         setTimes([]);
         return;
       }
 
-      // 2) Traer disponibilidad agregada para esa fecha (puede no devolver filas para franjas sin reservas)
+      // 2) Agrupar por hora_inicio para mostrar cada hora solo una vez
+      // (aunque solo debería haber una franja por hora, agrupamos por si acaso)
+      const horasUnicas = new Map<string, any>();
+      (franjas || []).forEach((f: any) => {
+        const horaKey = String(f.hora_inicio).slice(0,5);
+        if (!horasUnicas.has(horaKey)) {
+          horasUnicas.set(horaKey, f);
+        }
+      });
+      const franjasFiltradas = Array.from(horasUnicas.values());
+
+      // 3) Traer disponibilidad agregada para esa fecha (puede no devolver filas para franjas sin reservas)
       const fechaISO = date.toISOString().slice(0,10);
       const { data: disp, error: e2 } = await (supabase as any)
         .from("vista_disponibilidad_diaria")
@@ -77,14 +91,30 @@ const Booking = () => {
       const franjaIdToDisponibles = new Map<number, number>();
       (disp || []).forEach((d: any) => franjaIdToDisponibles.set(Number(d.franja_horaria_id), Number(d.barras_disponibles)));
 
-      // 3) Calcular barras necesarias según selección
+      // 4) Calcular barras necesarias según selección
       const barrasNecesarias = selectedOption === "sala" ? 3 : 1; // barra o bono = 1
 
-      // 4) Construir lista de horarios con disponibilidad
-      const items = (franjas || []).map((f: any) => {
-        const disponibles = franjaIdToDisponibles.has(f.id) ? franjaIdToDisponibles.get(f.id)! : 3;
-        let disabled = disponibles < barrasNecesarias;
+      // 5) Construir lista de horarios con disponibilidad
+      const items = franjasFiltradas.map((f: any) => {
         const label = String(f.hora_inicio).slice(0,5);
+        
+        // Determinar el tipo_reserva_id correcto según la opción seleccionada
+        let tipoReservaId = Number(f.tipo_reserva_id);
+        if (selectedOption === "sala" && tiposCatalogo.threeBarsId) {
+          tipoReservaId = tiposCatalogo.threeBarsId;
+        } else if ((selectedOption === "barra" || selectedOption === "bono") && tiposCatalogo.oneBarId) {
+          tipoReservaId = tiposCatalogo.oneBarId;
+        }
+        
+        // Usar el franjaId directamente (todas las reservas usan la misma franja física)
+        const franjaIdCorrecto = f.id;
+        
+        // Calcular disponibilidad (todas las franjas comparten las mismas 3 barras)
+        const disponibles = franjaIdToDisponibles.has(franjaIdCorrecto) 
+          ? franjaIdToDisponibles.get(franjaIdCorrecto)! 
+          : 3;
+        let disabled = disponibles < barrasNecesarias;
+        
         // Si la fecha seleccionada es hoy, deshabilitar horas ya pasadas
         if (startSelected.getTime() === startToday.getTime()) {
           const [hh, mm] = label.split(":").map(Number);
@@ -92,12 +122,13 @@ const Booking = () => {
           const nowMs = today.getHours() * 60 + today.getMinutes();
           if (timeMs <= nowMs) disabled = true;
         }
-        return { label, franjaId: f.id as number, tipoReservaId: Number(f.tipo_reserva_id), disponibles, disabled };
+        
+        return { label, franjaId: franjaIdCorrecto as number, tipoReservaId, disponibles, disabled };
       });
       setTimes(items);
     };
     load();
-  }, [date, selectedOption]);
+  }, [date, selectedOption, tiposCatalogo]);
 
   // Cargar catálogo de tipos (1 barra mañana/tarde y 3 barras) una vez
   useEffect(() => {
@@ -170,16 +201,12 @@ const Booking = () => {
     if (!selectedTime) return "";
     const [hhStr] = selectedTime.split(":");
     const hh = Number(hhStr);
-    if (hh < 14) return "Mañana";
     if (hh < 24) return "Tarde";
     return "Noche";
   }, [selectedTime]);
 
   const isMorning = useMemo(() => {
-    if (!selectedTime) return false;
-    const [hhStr] = selectedTime.split(":");
-    const hh = Number(hhStr);
-    return hh < 14;
+    return false; // Ya no hay opciones de mañanas
   }, [selectedTime]);
 
   

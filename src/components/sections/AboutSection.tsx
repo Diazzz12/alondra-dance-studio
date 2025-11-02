@@ -68,9 +68,11 @@ Nuestro espacio esta diseñado para ofrecerte la mejor experiencia de entrenamie
               
             </div>
             <div className="relative">
-              <div className="aspect-square rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center">
-                <div className="text-6xl font-bold text-primary/30">🎭</div>
-              </div>
+              <img 
+                src="/historia.png" 
+                alt="Nuestra Historia - Alondra Pole Space" 
+                className="aspect-square rounded-2xl object-cover w-full"
+              />
             </div>
           </div>
         </div>

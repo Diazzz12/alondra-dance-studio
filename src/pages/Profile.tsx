@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User } from "lucide-react";
+import { User, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,7 @@ type Reserva = {
   metodo_pago?: string;
   bono_usuario_id?: number | null;
   numero_barras?: number;
+  hora_inicio?: string;
 };
 
 const Profile = () => {
@@ -49,6 +50,7 @@ const Profile = () => {
   const [birthDate, setBirthDate] = useState<string>("");
   const [experience, setExperience] = useState<string>("");
   const [saving, setSaving] = useState<boolean>(false);
+  const [historialExpandido, setHistorialExpandido] = useState<boolean>(false);
 
   useEffect(() => {
     const load = async () => {
@@ -73,8 +75,8 @@ const Profile = () => {
         }
       } catch {}
       if (!firstName && !lastName && !phone) {
-        const { data: perf } = await supabase
-          .from("perfiles" as any)
+        const { data: perf } = await (supabase as any)
+          .from("perfiles")
           .select("nombre,telefono")
           .eq("id", user.user.id)
           .single();
@@ -86,10 +88,10 @@ const Profile = () => {
         }
       }
 
-      // Reservas del usuario
-      const { data: reservasData } = await supabase
+      // Reservas del usuario con información de franja horaria
+      const { data: reservasData } = await (supabase as any)
         .from("reservas")
-        .select("id, fecha, estado, franja_horaria_id, tipo_reserva_id, metodo_pago, bono_usuario_id, numero_barras")
+        .select("id, fecha, estado, franja_horaria_id, tipo_reserva_id, metodo_pago, bono_usuario_id, numero_barras, franjas_horarias(hora_inicio)")
         .eq("usuario_id", user.user.id)
         .order("fecha", { ascending: false });
 
@@ -98,17 +100,21 @@ const Profile = () => {
       const anteriores: Reserva[] = [];
       (reservasData || []).forEach((r: any) => {
         const fecha = new Date(r.fecha);
+        const reserva: Reserva = {
+          ...r,
+          hora_inicio: r.franjas_horarias?.hora_inicio || undefined
+        };
         if ((r.estado === 'confirmada' || r.estado === 'pendiente') && fecha >= new Date(hoy.toDateString())) {
-          activas.push(r as Reserva);
+          activas.push(reserva);
         } else {
-          anteriores.push(r as Reserva);
+          anteriores.push(reserva);
         }
       });
       setReservasActivas(activas);
       setReservasAnteriores(anteriores);
 
       // Bonos activos con días restantes (usamos la vista si existe; si no, fallback a join)
-      const { data: vista } = await supabase
+      const { data: vista } = await (supabase as any)
         .from("vista_bonos_activos")
         .select("bono_usuario_id, tipo_bono, clases_restantes, fecha_caducidad, dias_restantes")
         .eq("usuario_id", user.user.id);
@@ -123,7 +129,7 @@ const Profile = () => {
           }))
         );
       } else {
-        const { data: bonosData } = await supabase
+        const { data: bonosData } = await (supabase as any)
           .from("bonos_usuario")
           .select("id,clases_restantes,fecha_caducidad,estado,tipos_bono(nombre)")
           .eq("usuario_id", user.user.id)
@@ -150,7 +156,7 @@ const Profile = () => {
       const channel = supabase
         .channel('profile-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bonos_usuario', filter: `usuario_id=eq.${user.user.id}` }, async () => {
-          const { data: vista } = await supabase
+          const { data: vista } = await (supabase as any)
             .from('vista_bonos_activos')
             .select('bono_usuario_id, tipo_bono, clases_restantes, fecha_caducidad, dias_restantes')
             .eq('usuario_id', user.user.id);
@@ -159,9 +165,9 @@ const Profile = () => {
           }
         })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'reservas', filter: `usuario_id=eq.${user.user.id}` }, async () => {
-          const { data: reservasData } = await supabase
+          const { data: reservasData } = await (supabase as any)
             .from('reservas')
-            .select('id, fecha, estado, franja_horaria_id, tipo_reserva_id, metodo_pago, bono_usuario_id, numero_barras')
+            .select('id, fecha, estado, franja_horaria_id, tipo_reserva_id, metodo_pago, bono_usuario_id, numero_barras, franjas_horarias(hora_inicio)')
             .eq('usuario_id', user.user.id)
             .order('fecha', { ascending: false });
           const hoy = new Date();
@@ -169,10 +175,14 @@ const Profile = () => {
           const anteriores: Reserva[] = [];
           (reservasData || []).forEach((r: any) => {
             const fecha = new Date(r.fecha);
+            const reserva: Reserva = {
+              ...r,
+              hora_inicio: r.franjas_horarias?.hora_inicio || undefined
+            };
             if ((r.estado === 'confirmada' || r.estado === 'pendiente') && fecha >= new Date(hoy.toDateString())) {
-              activas.push(r as Reserva);
+              activas.push(reserva);
             } else {
-              anteriores.push(r as Reserva);
+              anteriores.push(reserva);
             }
           });
           setReservasActivas(activas);
@@ -276,13 +286,7 @@ const Profile = () => {
                       <Input id="birthDate" type="date" value={birthDate} onChange={(e) => setBirthDate(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="experience">Nivel de experiencia</Label>
-                      <select id="experience" value={experience} onChange={(e) => setExperience(e.target.value)} className="w-full p-2 border border-input rounded-md bg-background">
-                        <option value="">Seleccionar nivel</option>
-                        <option value="beginner">Principiante</option>
-                        <option value="intermediate">Intermedio</option>
-                        <option value="advanced">Avanzado</option>
-                      </select>
+                      
                     </div>
                   </div>
                   <div className="flex gap-4 pt-2">
@@ -312,11 +316,18 @@ const Profile = () => {
                     : usandoBono
                       ? 'Barra suelta (usando bono)'
                       : 'Barra suelta';
+                  const fechaReserva = new Date(r.fecha);
+                  const fechaFormateada = fechaReserva.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' });
+                  const horaFormateada = r.hora_inicio 
+                    ? r.hora_inicio.slice(0, 5) 
+                    : fechaReserva.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
                   return (
                     <div key={r.id} className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium">{titulo}</p>
-                        <p className="text-xs text-muted-foreground">{new Date(r.fecha).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {fechaFormateada} a las {horaFormateada}
+                        </p>
                       </div>
                       <Badge variant="secondary" className="text-xs capitalize">{r.estado}</Badge>
                     </div>
@@ -328,13 +339,35 @@ const Profile = () => {
             {/* Reservas anteriores */}
             <Card className="elegant-shadow">
               <CardHeader>
-                <CardTitle className="text-lg">Reservas anteriores</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span className="text-lg">Reservas anteriores</span>
+                  {reservasAnteriores.length > 3 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setHistorialExpandido(!historialExpandido)}
+                      className="text-primary hover:text-primary/80"
+                    >
+                      {historialExpandido ? (
+                        <>
+                          <ChevronUp className="w-4 h-4 mr-1" />
+                          Ver menos
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4 mr-1" />
+                          Ver historial completo ({reservasAnteriores.length})
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {reservasAnteriores.length === 0 && (
                   <p className="text-sm text-muted-foreground">Aún no hay reservas anteriores.</p>
                 )}
-                {reservasAnteriores.map((r) => {
+                {(historialExpandido ? reservasAnteriores : reservasAnteriores.slice(0, 3)).map((r) => {
                   const esSala = (r.numero_barras ?? 1) >= 3;
                   const usandoBono = (r.metodo_pago || '').toLowerCase() === 'bono' || !!r.bono_usuario_id;
                   const titulo = esSala

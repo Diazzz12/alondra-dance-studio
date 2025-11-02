@@ -20,3 +20,6 @@ WHERE table_name = 'reservas'
   AND column_name IN ('codigo_acceso', 'codigo_acceso_id');
 
 
+
+
+

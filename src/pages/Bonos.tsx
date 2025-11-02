@@ -31,17 +31,13 @@ const Bonos = () => {
         .select("id, nombre, precio, numero_clases, duracion_dias")
         .in("nombre", [
           "Bono 5 barras (tarde/punta)",
-          "Bono 5 barras mañanas (L-V hasta 14:00)",
           "Bono 10 barras (tarde/punta)",
-          "Bono 10 barras mañanas (L-V hasta 14:00)",
         ])
         .order("precio", { ascending: true });
 
       const orden = [
         "Bono 5 barras (tarde/punta)",
-        "Bono 5 barras mañanas (L-V hasta 14:00)",
         "Bono 10 barras (tarde/punta)",
-        "Bono 10 barras mañanas (L-V hasta 14:00)",
       ];
       const lista = ((data as any) || []).sort(
         (a: TipoBono, b: TipoBono) => orden.indexOf(a.nombre) - orden.indexOf(b.nombre)

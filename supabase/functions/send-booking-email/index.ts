@@ -322,62 +322,140 @@ Deno.serve(async (req) => {
       console.error('   Stack:', ttlockError.stack);
     }
     
-    const subject = "✅ Reserva confirmada - Alondra Pole Space";
+    const subject = "Reserva confirmada - Alondra Pole Space";
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
         <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
-          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-          .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea; }
-          .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
-          strong { color: #667eea; }
+          body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #FFFCF2;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            line-height: 1.7;
+          }
+
+          .container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #E8E8E6;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          }
+
+          .header {
+            background-color: #752A29;
+            color: #FFFCF2;
+            text-align: center;
+            padding: 40px 20px;
+          }
+
+          .header h1 {
+            font-size: 26px;
+            letter-spacing: 0.5px;
+            margin: 0;
+            font-weight: 600;
+          }
+
+          .content {
+            padding: 40px 30px;
+            background-color: #FFFCF2;
+          }
+
+          .content p {
+            margin-bottom: 18px;
+            font-size: 15px;
+          }
+
+          .info-box {
+            background-color: #E8E8E6;
+            padding: 20px 25px;
+            border-left: 4px solid #752A29;
+            border-radius: 6px;
+            margin: 25px 0;
+          }
+
+          .info-box h2 {
+            margin-top: 0;
+            color: #752A29;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+          }
+
+          .info-box p {
+            margin: 6px 0;
+            font-size: 14px;
+          }
+
+          strong {
+            color: #752A29;
+          }
+
+          .footer {
+            background-color: #E8E8E6;
+            text-align: center;
+            padding: 20px;
+            font-size: 13px;
+            color: #333;
+            border-top: 1px solid #d8d8d8;
+          }
+
+          a {
+            color: #752A29;
+            text-decoration: none;
+            font-weight: 600;
+          }
+
+          a:hover {
+            text-decoration: underline;
+          }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h1>🎉 ¡Reserva Confirmada!</h1>
+            <h1>Reserva Confirmada</h1>
           </div>
           <div class="content">
-            <p>¡Hola!</p>
+            <p>Hola,</p>
             <p>Tu reserva en <strong>Alondra Pole Space</strong> ha sido confirmada con éxito.</p>
             
             <div class="info-box">
-              <h2 style="margin-top: 0; color: #667eea;">📋 Detalles de tu reserva</h2>
-              <p><strong>📅 Fecha:</strong> ${fecha}</p>
-              <p><strong>🕐 Horario:</strong> ${horario}</p>
-              <p><strong>💎 Tipo:</strong> ${nombreTipoReserva}</p>
-              <p><strong>💳 Método de pago:</strong> ${metodoPago}</p>
-              <p><strong>💰 Precio:</strong> ${precio}</p>
+              <h2>Detalles de tu reserva</h2>
+              <p><strong>Fecha:</strong> ${fecha}</p>
+              <p><strong>Horario:</strong> ${horario}</p>
+              <p><strong>Tipo:</strong> ${nombreTipoReserva}</p>
+              <p><strong>Método de pago:</strong> ${metodoPago}</p>
+              <p><strong>Precio:</strong> ${precio}</p>
             </div>
             
             ${codigoAcceso ? `
-            <div class="info-box" style="background: #fff3cd; border-left: 4px solid #ffc107;">
-              <h2 style="margin-top: 0; color: #856404;">🔑 Código de acceso</h2>
-              <p style="font-size: 32px; font-weight: bold; text-align: center; color: #856404; letter-spacing: 4px; margin: 20px 0;">
+            <div class="info-box" style="background-color: #FFFCF2; border-left: 4px solid #752A29;">
+              <h2 style="margin-top: 0; color: #752A29;">🔑 Código de acceso</h2>
+              <p style="font-size: 32px; font-weight: bold; text-align: center; color: #752A29; letter-spacing: 4px; margin: 20px 0;">
                 ${codigoAcceso}
               </p>
-              <p style="font-size: 12px; color: #856404;">
+              <p style="font-size: 12px; color: #333;">
                 <strong>Válido desde:</strong> ${validoDesde ? new Date(validoDesde).toLocaleString('es-ES') : ''}<br>
                 <strong>Válido hasta:</strong> ${validoHasta ? new Date(validoHasta).toLocaleString('es-ES') : ''}
               </p>
-              <p style="font-size: 12px; color: #856404;">
+              <p style="font-size: 12px; color: #333;">
                 Introduce este código en el teclado de la puerta para acceder al local.
               </p>
             </div>
             ` : ''}
             
             <p>Puedes consultar todos los detalles de tu reserva en tu perfil de usuario.</p>
-            <p>¡Te esperamos! 💪✨</p>
+            <p>Gracias por confiar en nosotros.</p>
             
             <div class="footer">
-              <p>Alondra Pole Space</p>
-              <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
+              <p><strong>Alondra Pole Space</strong></p>
+              <p>Si tienes alguna pregunta, escríbenos a <a href="mailto:contacto@alondrapolespace.com">contacto@alondrapolespace.com</a></p>
             </div>
           </div>
         </div>

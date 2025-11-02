@@ -19,7 +19,7 @@ export const Navigation = () => {
   const { user, signOut } = useAuth();
 
   const navItems = [
-    { href: "/", label: "Inicio" },
+    
     { href: "/#pricing", label: "Ver Precios" },
     ...(user ? [
       { href: "/reservar", label: "Reservar" },

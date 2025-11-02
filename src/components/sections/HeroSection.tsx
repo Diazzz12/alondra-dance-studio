@@ -1,7 +1,32 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 export const HeroSection = () => {
+  const navigate = useNavigate();
+
+  const handleReservar = async () => {
+    // Verificar si el usuario está autenticado
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      navigate("/reservar");
+    } else {
+      navigate("/auth");
+    }
+  };
+
+  const handleContacto = () => {
+    // Hacer scroll al footer donde está la información de contacto
+    const footer = document.querySelector("footer");
+    if (footer) {
+      footer.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // Si no hay footer visible, abrir email
+      window.location.href = "mailto:contacto@alondrapolespace.com";
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background with gradient and pattern */}
@@ -43,11 +68,20 @@ export const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-up" style={{ animationDelay: '0.6s' }}>
-            <Button size="lg" className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-lg elegant-shadow">
+            <Button 
+              size="lg" 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-lg elegant-shadow"
+              onClick={handleReservar}
+            >
               Reservar Espacio
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <Button variant="outline" size="lg" className="px-8 py-3 text-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="px-8 py-3 text-lg border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              onClick={handleContacto}
+            >
               Contacta con nosotros
             </Button>
           </div>
