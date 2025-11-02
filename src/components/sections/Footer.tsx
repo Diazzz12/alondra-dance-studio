@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MapPin, Phone, Mail, Clock, Instagram, Facebook } from "lucide-react";
+import { MapPin, Phone, Mail, Clock, Instagram } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export const Footer = () => {
@@ -36,7 +36,7 @@ export const Footer = () => {
             {/* Contact Info */}
             <div>
               <div className="flex items-center space-x-3 mb-6">
-                <img src={logo} alt="Alondra Pole Space" className="h-8 w-8" />
+                <img src={logo} alt="Alondra Pole Space" className="h-8 w-8 rounded-full object-cover" />
                 <span className="text-xl font-bold">Alondra Pole Space</span>
               </div>
               
@@ -46,25 +46,25 @@ export const Footer = () => {
                   <div>
                     <p className="font-medium">Dirección</p>
                     <p className="text-muted-foreground text-sm">
-                      Calle Principal 123<br />
-                      28001 Madrid, España
+                      Calle Valle Inclán 24<br />
+                      Madrid, España
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3">
-                  <Phone className="w-5 h-5 text-primary" />
-                  <div>
+                  {/*<Phone className="w-5 h-5 text-primary" />
+                   <div>
                     <p className="font-medium">Teléfono</p>
                     <p className="text-muted-foreground text-sm">+34 123 456 789</p>
-                  </div>
+                  </div> */}
                 </div>
 
                 <div className="flex items-center space-x-3">
                   <Mail className="w-5 h-5 text-primary" />
                   <div>
                     <p className="font-medium">Email</p>
-                    <p className="text-muted-foreground text-sm">info@alondrapolespace.com</p>
+                    <p className="text-muted-foreground text-sm">alondrapolespace@gmail.com</p>
                   </div>
                 </div>
 
@@ -73,9 +73,7 @@ export const Footer = () => {
                   <div>
                     <p className="font-medium">Horarios</p>
                     <div className="text-muted-foreground text-sm">
-                      <p>Lun - Vie: 9:00 - 22:00</p>
-                      <p>Sábado: 10:00 - 20:00</p>
-                      <p>Domingo: 10:00 - 18:00</p>
+                      <p>Lun - Dom: 7:00 - 00:00</p>
                     </div>
                   </div>
                 </div>
@@ -85,44 +83,94 @@ export const Footer = () => {
               <div className="mt-8">
                 <p className="font-medium mb-4">Síguenos</p>
                 <div className="flex space-x-4">
-                  <Button variant="outline" size="sm" className="p-2">
-                    <Instagram className="w-4 h-4" />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="p-2"
+                    asChild
+                  >
+                    <a 
+                      href="https://www.instagram.com/alondrapolespace/" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label="Instagram"
+                    >
+                      <Instagram className="w-4 h-4" />
+                    </a>
                   </Button>
-                  <Button variant="outline" size="sm" className="p-2">
-                    <Facebook className="w-4 h-4" />
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="p-2"
+                    asChild
+                  >
+                    <a 
+                      href="https://www.tiktok.com/@alondrapolespace?_r=1&_t=ZN-914BGcXvZV0" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      aria-label="TikTok"
+                    >
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                      </svg>
+                    </a>
                   </Button>
                 </div>
               </div>
             </div>
 
-            {/* Map placeholder and how to get there */}
+            {/* Map and how to get there */}
             <div>
               <h3 className="text-lg font-semibold mb-4">Cómo Llegar</h3>
               
-              {/* Map placeholder */}
-              <div className="bg-muted rounded-lg h-48 mb-4 flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <MapPin className="w-8 h-8 mx-auto mb-2" />
-                  <p className="text-sm">Mapa Interactivo</p>
-                </div>
+              {/* Google Maps Embed */}
+              <div className="rounded-lg overflow-hidden mb-4 h-64 border elegant-shadow">
+                <iframe
+                  src="https://www.google.com/maps?q=Calle+Valle+Inclán+24,+Madrid,+España&output=embed"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title="Ubicación Alondra Pole Space - Calle Valle Inclán 24, Madrid"
+                  className="w-full h-full"
+                />
+              </div>
+              
+              <div className="mb-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="w-full"
+                  asChild
+                >
+                  <a 
+                    href="https://maps.app.goo.gl/aTCxszzeMnVJHicU6?g_st=iw" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                  >
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Abrir en Google Maps
+                  </a>
+                </Button>
               </div>
 
               <div className="space-y-3 text-sm text-muted-foreground">
                 <div>
-                  <p className="font-medium text-foreground">🚇 Metro</p>
-                  <p>Línea 2 - Estación Sol (5 min caminando)</p>
-                  <p>Línea 1 - Estación Gran Vía (8 min caminando)</p>
+                  <p className="font-medium text-foreground">🚇 Transporte público</p>
+                  <p>A tan solo 5 minutos caminando de la estación de Renfe de Maestra Justa Freire (Polideportivo de Aluche).</p>
+                  <p>A 20 minutos del intercambiador de Aluche o del metro de aviación española. </p>
                 </div>
                 
                 <div>
-                  <p className="font-medium text-foreground">🚌 Autobús</p>
-                  <p>Líneas 3, 25, 39 - Parada Plaza Mayor</p>
+                  <p className="font-medium text-foreground">🚌 Paradas de Autobús</p>
+                  <p>17, 34, 138, 139, 483 y 487, entre otras.</p>
                 </div>
                 
                 <div>
                   <p className="font-medium text-foreground">🚗 Parking</p>
-                  <p>Parking Plaza Mayor (2 min caminando)</p>
-                  <p>Parking San Miguel (5 min caminando)</p>
+                  <p>Es posible aparcar en la zona, suele haber plazas libres.</p>
                 </div>
               </div>
             </div>

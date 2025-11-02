@@ -31,12 +31,43 @@ export const Navigation = () => {
     navigate("/");
   };
 
+  const handleHashLink = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    const hashMatch = href.match(/#(.+)$/);
+    if (hashMatch) {
+      const hash = hashMatch[1];
+      const targetId = hash;
+      
+      if (location.pathname === "/") {
+        // Ya estamos en la página principal, hacer scroll directamente
+        e.preventDefault();
+        const element = document.getElementById(targetId);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "start" });
+          // Actualizar la URL con el hash sin recargar
+          window.history.pushState(null, "", `/#${targetId}`);
+        }
+      } else {
+        // Estamos en otra página, navegar primero y luego hacer scroll
+        e.preventDefault();
+        navigate("/", { state: { scrollTo: targetId } });
+        // Pequeño delay para asegurar que el componente se monte antes de hacer scroll
+        setTimeout(() => {
+          const element = document.getElementById(targetId);
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+            window.history.pushState(null, "", `/#${targetId}`);
+          }
+        }, 300);
+      }
+    }
+  };
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-3">
-            <img src={logo} alt="Alondra Pole Space" className="h-10 w-10" />
+            <img src="/logo.png" alt="Alondra Pole Space" className="h-10 w-10 rounded-full object-cover" />
             <span className="text-xl font-bold text-primary">Alondra Pole Space</span>
           </Link>
 
@@ -46,6 +77,7 @@ export const Navigation = () => {
               <Link
                 key={item.href}
                 to={item.href}
+                onClick={(e) => handleHashLink(e, item.href)}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
                   location.pathname === item.href ? "text-primary" : "text-muted-foreground"
                 }`}
@@ -123,10 +155,13 @@ export const Navigation = () => {
                 <Link
                   key={item.href}
                   to={item.href}
+                  onClick={(e) => {
+                    handleHashLink(e, item.href);
+                    setIsOpen(false);
+                  }}
                   className={`text-sm font-medium transition-colors hover:text-primary px-2 py-1 rounded ${
                     location.pathname === item.href ? "text-primary bg-primary/10" : "text-muted-foreground"
                   }`}
-                  onClick={() => setIsOpen(false)}
                 >
                   {item.label}
                 </Link>
