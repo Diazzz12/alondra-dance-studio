@@ -20,14 +20,14 @@ export const PricingSection = () => {
       name: "Bono 5 barras",
       price: "45",
       period: "Caducidad: 1 mes",
-      description: "Precio base, recomendado para principiantes",
+      description: "Tu bono ideal para venir todas las semanas",
       features: ["5 sesiones", "Caduca en 1 mes"],
     },
     {
       name: "Bono 10 barras",
       price: "80",
       period: "Caducidad: 3 meses",
-      description: "Para la peñita guay",
+      description: "Para los más adictos a entrenar con nosotros",
       features: ["10 sesiones", "Caduca en 3 meses"],
     },
   ];
@@ -37,14 +37,14 @@ export const PricingSection = () => {
       title: "Sala entera hasta 6 personas",
       price: "30",
       period: "1 sesión (1h30m)",
-      description: "Sesión privada",
+      description: "Ideal para grupos pequeños o principiantes",
       features: ["Hasta 6 personas", "3 barras", "Privacidad"]
     },
     {
       title: "Sala entera +6 personas",
       price: "40",
       period: "1 sesión (1h30m)",
-      description: "Sesión para 7-12",
+      description: "Para grupos más grandes, talleres o workshops",
       features: ["7-12 personas", "3 barras", "Privacidad"]
     }
   ];

@@ -127,6 +127,15 @@ All colors MUST be HSL.
   html {
     scroll-behavior: smooth;
   }
+
+  /* Justificar textos globalmente */
+  p {
+    @apply text-justify;
+  }
+
+  li {
+    @apply text-justify;
+  }
 }
 
 @layer components {
