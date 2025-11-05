@@ -81,16 +81,21 @@ const Profile = () => {
         }
       } catch {}
       if (!firstName && !lastName && !phone) {
-        const { data: perf } = await (supabase as any)
-          .from("perfiles")
-          .select("nombre,telefono")
-          .eq("id", user.user.id)
-          .single();
-        if (perf) {
-          const partes = String(perf.nombre ?? "").split(" ");
-          setFirstName(partes[0] ?? "");
-          setLastName(partes.slice(1).join(" ") ?? "");
-          setPhone(perf.telefono ?? "");
+        try {
+          const { data: perf, error: perfError } = await (supabase as any)
+            .from("perfiles")
+            .select("nombre,telefono")
+            .eq("id", user.user.id)
+            .single();
+          if (!perfError && perf) {
+            const partes = String(perf.nombre ?? "").split(" ");
+            setFirstName(partes[0] ?? "");
+            setLastName(partes.slice(1).join(" ") ?? "");
+            setPhone(perf.telefono ?? "");
+          }
+        } catch (e) {
+          // Ignorar errores al acceder a perfiles (puede no existir o tener RLS)
+          console.log("No se pudo acceder a tabla perfiles:", e);
         }
       }
 

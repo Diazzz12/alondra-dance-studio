@@ -174,12 +174,17 @@ const Auth = () => {
         if (authData.user) {
           const nombreCompleto = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
           
-          // Intentar actualizar en perfiles (tabla actual)
-          await (supabase as any).from("perfiles").upsert({
-            id: authData.user.id,
-            nombre: nombreCompleto,
-            telefono: formData.phone.trim(),
-          }, { onConflict: "id" });
+          // Intentar actualizar en perfiles (tabla actual) - fallback silencioso
+          try {
+            await (supabase as any).from("perfiles").upsert({
+              id: authData.user.id,
+              nombre: nombreCompleto,
+              telefono: formData.phone.trim(),
+            }, { onConflict: "id" });
+          } catch (e) {
+            // Ignorar si la tabla perfiles no existe o tiene RLS
+            console.log("No se pudo actualizar en perfiles:", e);
+          }
 
           // También actualizar en profiles por compatibilidad
           await supabase.from("profiles").upsert({

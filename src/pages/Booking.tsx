@@ -29,6 +29,7 @@ const Booking = () => {
   const [coupon, setCoupon] = useState<string>("");
   const [acceptedNorms, setAcceptedNorms] = useState<boolean>(false);
   const [couponStatus, setCouponStatus] = useState<"valid" | "invalid" | null>(null);
+  const [discountedPrice, setDiscountedPrice] = useState<number | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -306,14 +307,25 @@ const Booking = () => {
                             <>
                               <div className="flex justify-between">
                                 <span className="text-muted-foreground">Precio</span>
-                                <span className="font-semibold">€{
-                                  (
-                                    selectedOption === 'sala'
-                                      ? (tiposCatalogo.threeBarsPrice ?? 0)
-                                      : (isMorning ? (tiposCatalogo.oneBarMorningPrice ?? tiposCatalogo.oneBarPrice ?? 0) : (tiposCatalogo.oneBarAfternoonPrice ?? tiposCatalogo.oneBarPrice ?? 0))
-                                  ).toFixed(2)
-                                }</span>
+                                {(() => {
+                                  const base = (selectedOption === 'sala'
+                                    ? (tiposCatalogo.threeBarsPrice ?? 0)
+                                    : (isMorning ? (tiposCatalogo.oneBarMorningPrice ?? tiposCatalogo.oneBarPrice ?? 0) : (tiposCatalogo.oneBarAfternoonPrice ?? tiposCatalogo.oneBarPrice ?? 0))
+                                  );
+                                  if (discountedPrice !== null && couponStatus === 'valid') {
+                                    return (
+                                      <span className="font-semibold">
+                                        <span className="line-through mr-2 text-muted-foreground">€{base.toFixed(2)}</span>
+                                        <span>€{discountedPrice.toFixed(2)}</span>
+                                      </span>
+                                    );
+                                  }
+                                  return <span className="font-semibold">€{base.toFixed(2)}</span>;
+                                })()}
                               </div>
+                              {couponStatus === 'valid' && discountedPrice !== null && (
+                                <p className="text-xs text-green-600">Cupón aplicado: total €{discountedPrice.toFixed(2)}</p>
+                              )}
                               <div className="mt-3 max-w-sm">
                                 <label htmlFor="coupon" className="block text-xs mb-1 text-muted-foreground">Código de descuento</label>
                                 <div className="flex gap-2">
@@ -346,12 +358,23 @@ const Booking = () => {
                                         if (error) { console.error(error); setCouponStatus('invalid'); return; }
                                         if (Array.isArray(data) && data.length && data[0].valido) {
                                           setCouponStatus('valid');
+                                          // Intentar obtener precio final del RPC
+                                          const base = precio;
+                                          const d = data[0] as any;
+                                          let final = d.precio_final ?? d.precio_con_descuento ?? null;
+                                          if (final === null) {
+                                            if (d.amount_off) final = Math.max(base - Number(d.amount_off), 0);
+                                            else if (d.percent_off) final = Math.max(base * (1 - Number(d.percent_off)/100), 0);
+                                          }
+                                          setDiscountedPrice(final !== null ? Number(final) : base);
                                         } else {
                                           setCouponStatus('invalid');
+                                          setDiscountedPrice(null);
                                         }
                                       } catch (e) {
                                         console.error(e);
                                         setCouponStatus('invalid');
+                                        setDiscountedPrice(null);
                                       }
                                     }}
                                   >

@@ -7,12 +7,12 @@ const TTLOCK_API_BASE = "https://euapi.ttlock.com";
 let stripeClient = null;
 async function getStripeClient() {
   if (stripeClient) return stripeClient;
-  const mod = await import("https://esm.sh/stripe@12.17.0?target=deno&deno-std=0.177.1");
+  const mod = await import("https://esm.sh/stripe@12.17.0?target=deno");
   const Stripe = mod.default;
   stripeClient = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", {
-  httpClient: Stripe.createFetchHttpClient(),
-    apiVersion: "2025-09-30"
-});
+    httpClient: Stripe.createFetchHttpClient(),
+    apiVersion: "2023-10-16"
+  });
   return stripeClient;
 }
 const corsHeaders = {
@@ -227,7 +227,10 @@ async function sendEmail(to, subject, html, text) {
     }
     throw new Error("No hay servicio de email configurado");
   } catch (error) {
-    console.error(`✗ Error enviando email a ${to}:`, error.message);
+    console.error(`✗ Error enviando email a ${to}:`, error);
+    console.error(`✗ Stack trace:`, error.stack);
+    // Re-lanzar el error para que se vea en los logs de Supabase
+    throw error;
   }
 }
 Deno.serve(async (req)=>{
@@ -282,8 +285,13 @@ Deno.serve(async (req)=>{
           console.error('✗ Error obteniendo email del usuario:', userError);
         } else {
           userEmail = userData?.user?.email || null;
-          console.log('✓ Email del usuario obtenido:', userEmail);
+          console.log('✓ Email del usuario obtenido de auth:', userEmail);
         }
+      }
+      // Fallback: usar email de customer_details de Stripe si no se obtuvo de auth
+      if (!userEmail && session.customer_details?.email) {
+        userEmail = session.customer_details.email;
+        console.log('✓ Email obtenido de Stripe customer_details:', userEmail);
       }
       if (meta.item_type === 'tipo_reserva' && usuarioId && meta.fecha && franjaIdStr && tipoReservaIdStr) {
         try {
@@ -384,7 +392,9 @@ Deno.serve(async (req)=>{
               console.error('✗ Error generando código TTLock:', ttlockError);
               console.error('   Stack:', ttlockError.stack);
             }
+            console.log('📧 Estado del email:', { userEmail, hasEmail: !!userEmail });
             if (userEmail) {
+              console.log('📧 Preparando email de confirmación de reserva...');
               const horaInicio = franja?.hora_inicio || '';
               const horaFin = franja?.hora_fin || '';
               const horario = horaInicio && horaFin ? `de ${horaInicio} a ${horaFin}` : '';
@@ -529,7 +539,13 @@ Deno.serve(async (req)=>{
               `;
               const codigoTexto = codigoAcceso ? `\n\n🔑 CÓDIGO DE ACCESO: ${codigoAcceso}\nVálido desde: ${validoDesde ? new Date(validoDesde).toLocaleString('es-ES') : ''}\nVálido hasta: ${validoHasta ? new Date(validoHasta).toLocaleString('es-ES') : ''}\n\nIntroduce este código en el teclado de la puerta.\n` : '';
               const text = `¡Reserva confirmada!\n\nFecha: ${fecha}\nHorario: ${horario}\nTipo: ${nombreTipoReserva}\nPrecio: ${(Number(session.amount_total ?? 0) / 100).toFixed(2)}€${codigoTexto}\n\nPuedes consultar tu reserva en tu perfil.\n¡Te esperamos!`;
-              await sendEmail(userEmail, subject, html, text);
+              try {
+                await sendEmail(userEmail, subject, html, text);
+                console.log('✓ Email de confirmación enviado exitosamente');
+              } catch (emailErr) {
+                console.error('✗ Error al enviar email de confirmación:', emailErr);
+                // No bloqueamos el proceso si falla el email
+              }
             }
           }
         } catch (e) {
@@ -714,7 +730,13 @@ Deno.serve(async (req)=>{
                 </html>
               `;
               const text = `¡Bono adquirido!\n\nBono: ${tb.nombre}\nClases: ${tb.numero_clases}\nCaducidad: comienza en el primer uso (duración: ${tb.duracion_dias} días)\nPrecio: ${cantidadPagada.toFixed(2)}€\n\nPuedes usar tu bono en cualquier momento.\n¡Disfruta de tus clases!`;
-              await sendEmail(userEmail, subject, html, text);
+              try {
+                await sendEmail(userEmail, subject, html, text);
+                console.log('✓ Email de bono enviado exitosamente');
+              } catch (emailErr) {
+                console.error('✗ Error al enviar email de bono:', emailErr);
+                // No bloqueamos el proceso si falla el email
+              }
             }
           }
         } catch (e) {

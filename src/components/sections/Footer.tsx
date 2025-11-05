@@ -35,6 +35,15 @@ export const Footer = () => {
                     <p className="text-muted-foreground text-sm">alondrapolespace@gmail.com</p>
                   </div>
                 </div>
+                <div className="flex items-center space-x-3">
+                  <Phone className="w-5 h-5 text-primary" />
+                  <div>
+                    <p className="font-medium">Teléfono</p>
+                    <p className="text-muted-foreground text-sm">
+                      <a href="tel:+34633245219" className="hover:text-primary transition-colors">633 24 52 19</a>
+                    </p>
+                  </div>
+                </div>
                 <div className="flex items-start space-x-3">
                   <Clock className="w-5 h-5 text-primary mt-1" />
                   <div>
