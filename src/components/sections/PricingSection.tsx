@@ -159,8 +159,8 @@ En Alondra Pole Space puedes reservar fácilmente tu espacio de entrenamiento li
         </div>
 
         {/* Payment info */}
-        <div className="text-center mt-12 p-6 bg-muted/50 rounded-lg">
-          <p className="text-muted-foreground">
+        <div className="text-center mt-12 p-6 bg-muted/50 rounded-lg align-center">
+          <p className="text-muted-foreground text-center">
             📅 Reservas sin anticipación • 
             🔄 Política de cancelación flexible
           </p>

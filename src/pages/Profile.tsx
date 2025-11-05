@@ -3,7 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { User, ChevronDown, ChevronUp } from "lucide-react";
+import { User, ChevronDown, ChevronUp, MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,8 +27,8 @@ type BonoActivo = {
   id: number;
   tipo_bono: string;
   clases_restantes: number;
-  fecha_caducidad: string;
-  dias_restantes: number;
+  fecha_caducidad: string | null;
+  dias_restantes: number | null;
 };
 
 type Reserva = {
@@ -135,16 +141,21 @@ const Profile = () => {
           .eq("usuario_id", user.user.id)
           .eq("estado", "activo");
         setBonos(
-          (bonosData || []).map((b: any) => ({
-            id: b.id,
-            tipo_bono: b.tipos_bono?.nombre ?? "Bono",
-            clases_restantes: b.clases_restantes,
-            fecha_caducidad: b.fecha_caducidad,
-            dias_restantes: Math.max(
-              Math.ceil((new Date(b.fecha_caducidad).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-              0
-            ),
-          }))
+          (bonosData || []).map((b: any) => {
+            const diasRestantes = b.fecha_caducidad
+              ? Math.max(
+                  Math.ceil((new Date(b.fecha_caducidad).getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+                  0
+                )
+              : null; // sin activar
+            return {
+              id: b.id,
+              tipo_bono: b.tipos_bono?.nombre ?? "Bono",
+              clases_restantes: b.clases_restantes,
+              fecha_caducidad: b.fecha_caducidad,
+              dias_restantes: diasRestantes,
+            };
+          })
         );
       }
     };
@@ -329,7 +340,34 @@ const Profile = () => {
                           {fechaFormateada} a las {horaFormateada}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="text-xs capitalize">{r.estado}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs capitalize">{r.estado}</Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={async () => {
+                                const confirmar = window.confirm("¿Cancelar esta reserva? Política: 24h antes.");
+                                if (!confirmar) return;
+                                const { data, error } = await supabase.functions.invoke("cancel-reserva", {
+                                  body: { reservaId: r.id },
+                                } as any);
+                                if (!error) {
+                                  alert("Reserva cancelada correctamente.");
+                                } else {
+                                  alert(`No se pudo cancelar: ${error.message || 'Error desconocido'}`);
+                                }
+                              }}
+                            >
+                              Cancelar reserva
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   );
                 })}
@@ -406,7 +444,11 @@ const Profile = () => {
                   <div key={b.id} className="flex justify-between items-start">
                     <div>
                       <p className="text-sm font-medium">{b.tipo_bono}</p>
-                      <p className="text-xs text-muted-foreground">Caduca: {new Date(b.fecha_caducidad).toLocaleDateString()} ({b.dias_restantes} días)</p>
+                      {b.fecha_caducidad ? (
+                        <p className="text-xs text-muted-foreground">Caduca: {new Date(b.fecha_caducidad).toLocaleDateString()} ({b.dias_restantes} días)</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Bono listo para usar</p>
+                      )}
                       <p className="text-xs text-muted-foreground mt-1">Puede reservar: {b.tipo_bono.toLowerCase().includes('mañanas') ? 'solo mañanas' : 'tarde/punta'}</p>
                     </div>
                     <Badge variant="secondary" className="text-xs">{b.clases_restantes} clases</Badge>

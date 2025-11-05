@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MapPin, Phone, Mail, Clock, Instagram } from "lucide-react";
-import logo from "@/assets/logo.png";
 
 export const Footer = () => {
   return (
@@ -12,7 +11,9 @@ export const Footer = () => {
           <Card className="border-0 elegant-shadow">
             <CardHeader>
               <div className="flex items-center space-x-3">
-                <img src={logo} alt="Alondra Pole Space" className="h-8 w-8 rounded-full object-cover" />
+                <div className="h-10 w-10 rounded-full overflow-hidden bg-background border border-white/20">
+                  <img src="/logo.png" alt="Alondra Pole Space" className="h-full w-full object-cover scale-[1.20]" />
+                </div>
                 <CardTitle>Alondra Pole Space</CardTitle>
               </div>
             </CardHeader>
@@ -24,7 +25,7 @@ export const Footer = () => {
                   <MapPin className="w-5 h-5 text-primary mt-1" />
                   <div>
                     <p className="font-medium">Dirección</p>
-                    <p className="text-muted-foreground text-sm">Calle Valle Inclán 24<br />Madrid, España</p>
+                    <p className="text-muted-foreground text-sm">Calle Valle Inclán 24, entrada exterior trasera <br />Madrid, España</p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
@@ -98,9 +99,9 @@ export const Footer = () => {
             </CardHeader>
             <CardContent className="space-y-3 text-sm text-muted-foreground">
               <div>
-                <p className="font-medium text-foreground">🚇 Transporte público</p>
-                <p>A tan solo 5 minutos caminando de la estación de Renfe de Maestra Justa Freire (Polideportivo de Aluche).</p>
-                <p>A 20 minutos del intercambiador de Aluche o del metro de aviación española.</p>
+                <p className="font-medium text-foreground">🚇 Trenes y Metro</p>
+                <p>A tan solo 5 minutos caminando de la estación de Renfe de Maestra Justa Freire (línea C-5) (Polideportivo de Aluche).</p>
+                <p>A 20 minutos andando desde el intercambiador de Aluche (línea 5) o del metro de Aviación Española (línea 10).</p>
               </div>
               <div>
                 <p className="font-medium text-foreground">🚌 Paradas de Autobús</p>
@@ -108,7 +109,7 @@ export const Footer = () => {
               </div>
               <div>
                 <p className="font-medium text-foreground">🚗 Parking</p>
-                <p>Es posible aparcar en la zona, suele haber plazas libres.</p>
+                <p>Aparcamiento gratuito en la zona.</p>
               </div>
             </CardContent>
           </Card>
@@ -118,12 +119,11 @@ export const Footer = () => {
         <div className="border-t mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-muted-foreground text-sm">
-              © 2024 Alondra Pole Space. Todos los derechos reservados.
+              © 2025 Alondra Pole Space. Todos los derechos reservados.
             </p>
             <div className="flex space-x-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">Política de Privacidad</a>
-              <a href="#" className="hover:text-primary transition-colors">Términos y Condiciones</a>
-              <a href="#" className="hover:text-primary transition-colors">Aviso Legal</a>
+              <a href="/aviso-legal" className="hover:text-primary transition-colors">Aviso Legal</a>
+              <a href="/privacidad" className="hover:text-primary transition-colors">Política de Privacidad</a>
             </div>
           </div>
         </div>

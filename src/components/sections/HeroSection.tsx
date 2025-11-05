@@ -44,11 +44,11 @@ export const HeroSection = () => {
           <div className="mb-12 animate-fade-up">
             <div className="relative inline-block">
               <div className="absolute -inset-6 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-xl opacity-50"></div>
-              <div className="relative bg-white/10 backdrop-blur-sm rounded-full p-8 shadow-2xl  /20">
+              <div className="relative rounded-full p-3 shadow-2xl border border-white/20 bg-background overflow-hidden">
                 <img 
                   src="/logo.png" 
                   alt="Alondra Pole Space Logo" 
-                  className="h-60 w-60 md:h-80 md:w-80 rounded-full object-cover drop-shadow-lg"
+                  className="h-72 w-72 md:h-96 md:w-96 object-cover rounded-full scale-[1.10]"
                 />
               </div>
             </div>

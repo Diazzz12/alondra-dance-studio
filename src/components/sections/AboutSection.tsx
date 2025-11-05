@@ -61,7 +61,7 @@ Nuestro espacio esta diseñado para ofrecerte la mejor experiencia de entrenamie
               Alondra Pole Space nace con el propósito de ofrecer un espacio especializado en entrenamiento libre de pole dance, donde cada persona pueda desarrollar su técnica y condición física con autonomía, en un entorno cuidado y profesional.
               </p>
               <p className="text-muted-foreground mb-6">
-              El ave Alondra representa la libertad, la precisión del movimiento y la capacidad de superación. Estos valores inspiran nuestro proyecto: un espacio que fomenta la independencia en el entrenamiento, el bienestar físico y el crecimiento personal.
+              El ave alondra representa la libertad, la precisión del movimiento y la capacidad de superación. Estos valores inspiran nuestro proyecto: un espacio que fomenta la independencia en el entrenamiento, el bienestar físico y el crecimiento personal.
               </p>
               <p className="text-muted-foreground mb-6">
               En Alondra no impartimos clases dirigidas; cada persona entrena a su ritmo, utilizando una sala equipada para potenciar fuerza, flexibilidad y control corporal. Nuestro objetivo es ofrecer un entorno seguro, funcional y motivador para que cada sesión te acerque a tus metas.              </p>

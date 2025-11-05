@@ -577,12 +577,11 @@ Deno.serve(async (req)=>{
           const { data: tb, error: eTb } = await sb.from('tipos_bono').select('numero_clases, duracion_dias, nombre').eq('id', tipoBonoId).single();
           if (eTb) throw eTb;
           if (!tb) throw new Error('tipo_bono no encontrado');
-          const fechaCad = new Date();
-          fechaCad.setDate(fechaCad.getDate() + Number(tb.duracion_dias));
           const { error: bonoErr } = await sb.from('bonos_usuario').insert({
             usuario_id: usuarioId,
             tipo_bono_id: tipoBonoId,
-            fecha_caducidad: fechaCad.toISOString().slice(0, 10),
+            fecha_caducidad: null, // ahora se fija en el primer uso
+            fecha_activacion: null,
             clases_restantes: Number(tb.numero_clases),
             clases_totales: Number(tb.numero_clases),
             estado: 'activo'
@@ -699,7 +698,7 @@ Deno.serve(async (req)=>{
                         <h2>Detalles del bono</h2>
                         <p><strong>Bono:</strong> ${tb.nombre}</p>
                         <p><strong>Clases incluidas:</strong> ${tb.numero_clases}</p>
-                        <p><strong>Válido hasta:</strong> ${fechaCad.toISOString().slice(0, 10)}</p>
+                        <p><strong>Caducidad:</strong> comienza en el primer uso (duración: ${tb.duracion_dias} días)</p>
                         <p><strong>Precio:</strong> ${cantidadPagada.toFixed(2)}€</p>
                       </div>
                       
@@ -714,7 +713,7 @@ Deno.serve(async (req)=>{
                 </body>
                 </html>
               `;
-              const text = `¡Bono adquirido!\n\nBono: ${tb.nombre}\nClases: ${tb.numero_clases}\nVálido hasta: ${fechaCad.toISOString().slice(0, 10)}\nPrecio: ${cantidadPagada.toFixed(2)}€\n\nPuedes usar tu bono en cualquier momento.\n¡Disfruta de tus clases!`;
+              const text = `¡Bono adquirido!\n\nBono: ${tb.nombre}\nClases: ${tb.numero_clases}\nCaducidad: comienza en el primer uso (duración: ${tb.duracion_dias} días)\nPrecio: ${cantidadPagada.toFixed(2)}€\n\nPuedes usar tu bono en cualquier momento.\n¡Disfruta de tus clases!`;
               await sendEmail(userEmail, subject, html, text);
             }
           }

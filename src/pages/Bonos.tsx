@@ -26,23 +26,15 @@ const Bonos = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from("tipos_bono")
         .select("id, nombre, precio, numero_clases, duracion_dias")
-        .in("nombre", [
-          "Bono 5 barras (tarde/punta)",
-          "Bono 10 barras (tarde/punta)",
-        ])
+        .eq("activo", true)
         .order("precio", { ascending: true });
-
-      const orden = [
-        "Bono 5 barras (tarde/punta)",
-        "Bono 10 barras (tarde/punta)",
-      ];
-      const lista = ((data as any) || []).sort(
-        (a: TipoBono, b: TipoBono) => orden.indexOf(a.nombre) - orden.indexOf(b.nombre)
-      );
-      setBonos(lista);
+      if (error) {
+        console.error(error);
+      }
+      setBonos((data as any) || []);
     };
     load();
   }, []);

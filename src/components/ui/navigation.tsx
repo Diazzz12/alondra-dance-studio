@@ -67,7 +67,9 @@ export const Navigation = () => {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center space-x-3">
-            <img src="/logo.png" alt="Alondra Pole Space" className="h-10 w-10 rounded-full object-cover" />
+            <div className="h-12 w-12 rounded-full overflow-hidden bg-background border border-white/20">
+              <img src="/logo.png" alt="Alondra Pole Space" className="h-full w-full object-cover scale-[1.20]" />
+            </div>
             <span className="text-xl font-bold text-primary">Alondra Pole Space</span>
           </Link>
 

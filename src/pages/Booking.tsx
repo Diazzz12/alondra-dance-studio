@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { startCheckout } from "@/lib/checkout";
 import { Input } from "@/components/ui/input";
 
@@ -26,6 +27,7 @@ const Booking = () => {
   const [bonoDisponible, setBonoDisponible] = useState<{ bono_usuario_id: number; clases_restantes: number; fecha_caducidad: string; tipo_bono?: string } | null>(null);
   const [loadingAction, setLoadingAction] = useState<boolean>(false);
   const [coupon, setCoupon] = useState<string>("");
+  const [acceptedNorms, setAcceptedNorms] = useState<boolean>(false);
   const [couponStatus, setCouponStatus] = useState<"valid" | "invalid" | null>(null);
 
   useEffect(() => {
@@ -217,12 +219,12 @@ const Booking = () => {
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="text-center">
             <h1 className="text-4xl font-bold mb-2">Reservar</h1>
-            <p className="text-muted-foreground">Selecciona tipo y fecha</p>
+            <p className="text-muted-foreground">Selecciona modalidad y fecha</p>
           </div>
 
           <Card className="elegant-shadow">
             <CardHeader>
-              <CardTitle className="text-lg">Tipo</CardTitle>
+              <CardTitle className="text-lg">Modalidad</CardTitle>
             </CardHeader>
             <CardContent>
               <Select value={selectedOption} onValueChange={setSelectedOption}>
@@ -230,7 +232,7 @@ const Booking = () => {
                   <SelectValue placeholder="Elige modalidad" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="barra">Barra suelta</SelectItem>
+                  <SelectItem value="barra">Barra individual</SelectItem>
                   <SelectItem value="bono">Bono</SelectItem>
                   <SelectItem value="sala">Sala entera</SelectItem>
                 </SelectContent>
@@ -371,7 +373,9 @@ const Booking = () => {
                               <span className="text-muted-foreground">Bono</span>
                               <span className="font-medium">
                                 {bonoDisponible
-                                  ? `${bonoDisponible.clases_restantes} usos restantes · caduca ${new Date(bonoDisponible.fecha_caducidad).toLocaleDateString()}`
+                                  ? bonoDisponible.fecha_caducidad
+                                    ? `${bonoDisponible.clases_restantes} usos restantes · caduca ${new Date(bonoDisponible.fecha_caducidad).toLocaleDateString()}`
+                                    : `${bonoDisponible.clases_restantes} usos restantes · Bono listo para usar`
                                   : 'No tienes bonos activos'}
                               </span>
                             </div>
@@ -389,6 +393,22 @@ const Booking = () => {
                         </CardContent>
                       </Card>
 
+                      {/* Aceptación de normas */}
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={acceptedNorms}
+                            onChange={(e) => setAcceptedNorms(e.target.checked)}
+                            className="h-4 w-4"
+                          />
+                          <span>
+                            He leído y acepto las{' '}
+                            <Link to="/normas" className="text-primary underline underline-offset-4" target="_blank">Normas de uso</Link>
+                          </span>
+                        </label>
+                      </div>
+
                       <div className="flex items-center justify-between">
                         {selectedOption === 'bono' && !bonoDisponible ? (
                           <>
@@ -403,11 +423,12 @@ const Booking = () => {
                           </>
                         ) : (
                           <Button
-                            disabled={loadingAction}
+                            disabled={loadingAction || !acceptedNorms}
                             onClick={async () => {
                               if (!date) return;
                               const sel = times.find(t => t.label === selectedTime);
                               if (!sel) return;
+                              if (!acceptedNorms) { alert('Debes aceptar las Normas de uso.'); return; }
                               const fechaISO = date.toISOString().slice(0,10);
                               try {
                                 setLoadingAction(true);

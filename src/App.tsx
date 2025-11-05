@@ -13,6 +13,9 @@ import Bonos from "./pages/Bonos";
 import ReservaConfirmada from "./pages/ReservaConfirmada";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Normas from "./pages/Normas";
+import AvisoLegal from "./pages/AvisoLegal";
+import Privacidad from "./pages/Privacidad";
 
 const queryClient = new QueryClient();
 
@@ -30,6 +33,9 @@ const App = () => (
             <Route path="/reservar" element={<ProtectedRoute><Booking /></ProtectedRoute>} />
             <Route path="/bonos" element={<ProtectedRoute><Bonos /></ProtectedRoute>} />
             <Route path="/reserva-confirmada" element={<ProtectedRoute><ReservaConfirmada /></ProtectedRoute>} />
+            <Route path="/normas" element={<Normas />} />
+            <Route path="/aviso-legal" element={<AvisoLegal />} />
+            <Route path="/privacidad" element={<Privacidad />} />
             <Route path="/auth" element={<Auth />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
