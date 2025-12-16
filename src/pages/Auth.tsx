@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, Eye, EyeOff, Phone } from "lucide-react";
-import { z } from "zod";
+import { z } from "zod"; 
 
 const authSchema = z.object({
   email: z.string().email("Email inválido").max(255, "Email muy largo"),
