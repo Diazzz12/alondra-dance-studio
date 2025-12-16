@@ -12,10 +12,12 @@ import Booking from "./pages/Booking";
 import Bonos from "./pages/Bonos";
 import ReservaConfirmada from "./pages/ReservaConfirmada";
 import Auth from "./pages/Auth";
+import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
 import Normas from "./pages/Normas";
 import AvisoLegal from "./pages/AvisoLegal";
 import Privacidad from "./pages/Privacidad";
+import Sesiones from "./pages/Sesiones";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,8 @@ const App = () => (
             <Route path="/aviso-legal" element={<AvisoLegal />} />
             <Route path="/privacidad" element={<Privacidad />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/sesiones" element={<ProtectedRoute><Sesiones /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
