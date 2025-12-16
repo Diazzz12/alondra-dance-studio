@@ -16,7 +16,7 @@ const resetPasswordSchema = z.object({
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
-}); 
+});
 
 const ResetPassword = () => {
   const { user, loading } = useAuth();
