@@ -42,7 +42,7 @@ const Auth = () => {
         navigate("/");
       }
     };
-    
+
     checkUser();
 
     // Listen for auth changes
@@ -56,12 +56,12 @@ const Auth = () => {
   }, [navigate]);
 
   const validateForm = (isSignUp: boolean = false) => {
-    const schema = isSignUp 
+    const schema = isSignUp
       ? authSchema.extend({
-          firstName: z.string().min(1, "Nombre requerido").max(50, "Nombre muy largo"),
-          lastName: z.string().min(1, "Apellidos requeridos").max(50, "Apellidos muy largos"),
-          phone: z.string().min(1, "Teléfono requerido").max(20, "Teléfono muy largo").regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, "Formato de teléfono inválido"),
-        })
+        firstName: z.string().min(1, "Nombre requerido").max(50, "Nombre muy largo"),
+        lastName: z.string().min(1, "Apellidos requeridos").max(50, "Apellidos muy largos"),
+        phone: z.string().min(1, "Teléfono requerido").max(20, "Teléfono muy largo").regex(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/, "Formato de teléfono inválido"),
+      })
       : authSchema.pick({ email: true, password: true });
 
     try {
@@ -90,9 +90,60 @@ const Auth = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!formData.email.trim()) {
+      toast({
+        title: "Email requerido",
+        description: "Por favor, ingresa tu email para recuperar tu contraseña",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Usar la URL de producción si estamos en producción, sino usar la URL actual
+      // Esto asegura que siempre se use la URL correcta según el entorno
+      const isProduction = window.location.hostname === 'alondrapolespace.es' ||
+        window.location.hostname === 'www.alondrapolespace.es';
+      const baseUrl = isProduction
+        ? 'https://alondrapolespace.es'
+        : window.location.origin;
+
+      const redirectUrl = `${baseUrl}/reset-password`;
+
+      console.log('URL de redirección para reset password:', redirectUrl);
+
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email.trim(), {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Email enviado",
+          description: "Revisa tu email para restablecer tu contraseña",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Error inesperado. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm(false)) return;
 
     setIsLoading(true);
@@ -135,13 +186,13 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm(true)) return;
 
     setIsLoading(true);
     try {
       const redirectUrl = `${window.location.origin}/`;
-      
+
       const { data: authData, error } = await supabase.auth.signUp({
         email: formData.email.trim(),
         password: formData.password,
@@ -173,7 +224,7 @@ const Auth = () => {
         // Actualizar el perfil con nombre y teléfono
         if (authData.user) {
           const nombreCompleto = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
-          
+
           // Intentar actualizar en perfiles (tabla actual) - fallback silencioso
           try {
             await (supabase as any).from("perfiles").upsert({
@@ -282,13 +333,23 @@ const Auth = () => {
                     )}
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90" 
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary/90"
                     disabled={isLoading}
                   >
                     {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
                   </Button>
+
+                  <div className="text-center mt-4">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-sm text-muted-foreground hover:text-primary underline"
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </button>
+                  </div>
                 </form>
               </TabsContent>
 
@@ -392,9 +453,9 @@ const Auth = () => {
                     )}
                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90" 
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary/90"
                     disabled={isLoading}
                   >
                     {isLoading ? "Registrando..." : "Crear Cuenta"}
