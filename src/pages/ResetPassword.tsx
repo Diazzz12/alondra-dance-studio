@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Eye, EyeOff } from "lucide-react";
-import { z } from "zod";
+import { z } from "zod"; 
 
 const resetPasswordSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(100, "Contraseña muy larga"),
