@@ -14,7 +14,7 @@ import ReservaConfirmada from "./pages/ReservaConfirmada";
 import Auth from "./pages/Auth";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
-import Normas from "./pages/Normas";
+import Normas from "./pages/Normas"; 
 import AvisoLegal from "./pages/AvisoLegal";
 import Privacidad from "./pages/Privacidad";
 import Sesiones from "./pages/Sesiones";
