@@ -341,12 +341,16 @@ const Auth = () => {
                     {isLoading ? "Iniciando sesión..." : "Iniciar Sesión"}
                   </Button>
 
-                  <div className="text-center mt-4">
+                  <div className="text-center mt-4 pt-2">
                     <button
                       type="button"
                       onClick={handleForgotPassword}
-                      className="text-sm text-muted-foreground hover:text-primary underline"
+                      className="text-sm text-muted-foreground hover:text-primary underline transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                       disabled={isLoading}
+                      style={{ 
+                        textDecoration: 'underline',
+                        cursor: isLoading ? 'not-allowed' : 'pointer'
+                      }}
                     >
                       ¿Olvidaste tu contraseña?
                     </button>
